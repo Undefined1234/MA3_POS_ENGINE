@@ -1,4 +1,4 @@
-import { Logger, LogLevel } from "@ma3-pro-plugins/ma3-pro-plugins-lib"
+import { Logger, LogLevel, applyObjProps, applyObjPropsWithDefaults } from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
 
 function main(this: void, displayHandle: Display, argument: string) {
@@ -8,7 +8,8 @@ function main(this: void, displayHandle: Display, argument: string) {
 
     switch (argument) {
         case "install": {
-            ImageLibraryInstaller(log).onInstall()
+            DataPool()[10][1].yGroup = 3
+            log.trace("Yvalue was adjusted")
             break
         }
         case "uninstall": {

@@ -34,6 +34,6 @@
     "typescript-to-lua": "^1.10.1"
   },
   "dependencies": {
-    "@ma3-pro-plugins/ma3-pro-plugins-lib": "~0.4.0"
+    "@ma3-pro-plugins/ma3-pro-plugins-lib": "^0.5.1"
   }
 }

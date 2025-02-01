@@ -1,4 +1,4 @@
-import { Logger, LogLevel, applyObjProps, applyObjPropsWithDefaults } from "@ma3-pro-plugins/ma3-pro-plugins-lib"
+import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
 import {item, layout} from "./Layoutmaker"
 
@@ -9,11 +9,7 @@ function main(this: void, displayHandle: Display, argument: string) {
 
     switch (argument) {
         case "install": {
-            DataPool()[10][1].yGroup = 3
-            log.trace("Yvalue was adjusted")
-            let layout_ = new layout(200);
-            layout_.additem("test", 12);
-            layout_.addcol();
+            ImageLibraryInstaller(log).onInstall()
             break
         }
         case "uninstall": {

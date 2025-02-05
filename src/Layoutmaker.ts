@@ -53,15 +53,14 @@ export class item {
 }
 
 export class engine {
-    engine_num: number;
-    positions!: Array<number>;
-    palette_pos!: Array<number>;
-    matricks_flyout_num!: number;
-    matricks_movement_num!: number;
-    matricks_pos!: number;
-    phasers!: Array<phaser>;
-    group_linear!: number;
-    group_grid!: number;
+    engine_num: number; //Engine number
+    positions!: Array<number>; //Positions for physical adjustment
+    positions2!: Array<number>; //Positions for step 2 of template presets
+    palette_pos!: Array<number>; //Palettes for step 1 and 2 (respectively) of the phaser effects
+    matricks!: Array<number>; // MAtricks for position, flyouts, movements respectively 
+    phasers!: Array<phaser>; //Phaser effects 
+    group_linear!: number; //Linear group
+    group_grid!: number; //Grid group
 
     constructor(engine_num: number){
         this.engine_num = engine_num
@@ -77,8 +76,11 @@ export class engine {
 
         return dict.join(",") // engine_num , length pos array , pos array, 
     }
+    fromstring() {
 
-    create_engine(track: tracker, preset: presets){
+    }
+
+    create_engine(track: tracker, preset: statics){
         for (let i = 0; i<2; i++){ // create custom palettes for flyout 
             Cmd("Store preset 2."+track.curr_pos+" /nc");
             Cmd("Store label 2."+track.curr_pos+" POS_ENGINE_"+this.engine_num+"_PALETTE_"+(i+1)+" /nc");
@@ -89,7 +91,7 @@ export class engine {
 
 }
 
-export class phaser {
+export class phaser { //TODO: Make phasers more general 
     cross: String;
     step1_width: Number;
     step2_width: Number;
@@ -111,7 +113,7 @@ export class phaser {
     }
 }
 
-export class tracker {
+export class tracker { //TODO: add tracker for: all1, matricks. And create function that loops through start point and finds first available free spot. 
     curr_sequence: number;
     curr_macro: number;
     curr_pos: number;
@@ -134,6 +136,9 @@ export class tracker {
     tostring(){
         return [this.curr_sequence, this.curr_macro, this.curr_pos].join(",") 
     }
+    fromstring() {
+
+    }
 }
 
 export function trackerfromstring(string: string | undefined){
@@ -148,8 +153,8 @@ export function trackerfromstring(string: string | undefined){
     return new tracker(curr_sequence, curr_macro, curr_pos);
 }
 
-export class presets { // Presets used for all engines 
-    positions: Number[] = [-1,-1]; //Begin and end number 
+export class statics { // Class containing static content for this plugin //TODO: add remote control for OnStartup sequence 
+    positions: Number[] = [-1,-1]; //Begin and end number of positions
 
     set_position_start(n: Number){
         this.positions[0] = n;
@@ -159,6 +164,9 @@ export class presets { // Presets used for all engines
     }
     tostring(){
         return this.positions.join(",")
+    }
+    fromstring() {
+
     }
 
 }
@@ -175,18 +183,18 @@ const positions = {
     8: "UPSPREAD"
 };
 
-export function clearprogrammer() {
+export function clearprogrammer() { //TODO: extend clearprogrammer to really be clear 
     Cmd("clear; clear; clear")
 }
 
-export function create_positions(track: tracker, presets: presets){
-    presets.set_position_start(track.curr_pos)
+export function create_positions(track: tracker, statics_: statics){
+    statics_.set_position_start(track.curr_pos)
     Object.values(positions).forEach(p => {
         Cmd("Store preset 2."+track.curr_pos+" /nc");
         Cmd("Label preset 2."+track.curr_pos+" "+ p +" /nc");
         track.increment_pos();
     }); 
-    presets.set_position_end(track.curr_pos)
+    statics_.set_position_end(track.curr_pos)
 }
 
 export function parse_engines(){ // will find engines in variable list and return array with all engines

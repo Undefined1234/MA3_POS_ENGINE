@@ -1,11 +1,11 @@
 {
     "$schema": "node_modules/@ma3-pro-plugins/ma3-ts-plugin-builder/scheme/maconfigScheme.json",
     "maVersion": "1.8.8",
-    "author": "Some Author",
-    "organizationId": "author_id",
-    "pluginId": "build_plugin_example",
+    "author": "8Events",
+    "organizationId": "8Events_Plugins",
+    "pluginId": "POS_ENGINE_PLUGIN",
     "pluginVersion": "0.1.0",
-    "maPluginName": "Build Plugin Example",
+    "maPluginName": "POS_ENGINE_PLUGIN",
     "components": [
         {
             "type": "ts",

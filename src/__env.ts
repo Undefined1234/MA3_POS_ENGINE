@@ -2,8 +2,8 @@
 import {PluginEnv} from "lib/plugin/PluginEnv"
 export const PLUGIN_ENV = new PluginEnv({
     env: "prod",
-    pluginName: "Build Plugin Example",
-    pluginId: "author_id__build_plugin_example__v0_1_0",
+    pluginName: "POS_ENGINE_PLUGIN",
+    pluginId: "8Events_Plugins__POS_ENGINE_PLUGIN__v0_1_0",
     pluginVersion: "0.1.0",
-    author: "Some Author"
+    author: "8Events"
 })

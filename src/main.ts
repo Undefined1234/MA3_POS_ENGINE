@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_positions, engine, trackerfromstring, item, layout, statics, tracker} from "./Layoutmaker"
+import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -47,6 +47,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                             engines[index-1].engine_num = parseFloat(input.inputs[e])
                         }
                     });
+                    
                     let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
                     let statics_ = //TODO finish statics_
                     engines.forEach(e => {
@@ -63,13 +64,20 @@ function main(this: void, displayHandle: Display, argument: string) {
         log.trace("main(): Install images");
         ImageLibraryInstaller(log).onInstall();
         log.trace("main(): prepeare objects");
-        let track = new tracker(100, 100, 100); //TODO make start point dynamic 
+
+        let track = new tracker(100, 100, 100, 100); //TODO make start point dynamic 
         let statics_ = new statics();
-        log.trace("main(): Create engines");
-        create_positions(track, statics_);
+
+        log.trace("main(): Creating appearances");
+        statics_.create_appearances(track);
+
+        log.trace("main(): Creating poalettes");
+        create_position_palettes(track, statics_);
+
+        // setting some vars
         SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
         SetVar(UserVars(),"POS_ENGINE_PRESET", statics_.tostring());
-        SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
+        //SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
         log.trace("main(): Engines prepared and ready for initialization")
     }
 }

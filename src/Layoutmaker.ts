@@ -55,29 +55,62 @@ export class item {
 
 export class engine {
     engine_num: number; //Engine number
-    positions!: Array<number>; //Positions for physical adjustment
+    positions: Array<number> = []; //Positions for physical adjustment
     positions2!: Array<number>; //Positions for step 2 of template presets
-    palette_pos!: Array<number>; //Palettes for step 1 and 2 (respectively) of the phaser effects
+    palette_pos: Array<number> = []; //Palettes for step 1 and 2 (respectively) of the phaser effects
     matricks!: Array<number>; // MAtricks for position, flyouts, movements respectively 
     phasers!: Array<phaser>; //Phaser effects 
     group_linear!: number; //Linear group
     group_grid!: number; //Grid group
+    installed: boolean = false; //boolean that will check whether the engine is installed in MA3
 
     constructor(engine_num: number){
         this.engine_num = engine_num
     }
 
     tostring() {
-        let dict = [];
-        dict.push(this.engine_num);
-        dict.push(this.positions.length)
-        this.positions.forEach(e =>{
-            dict.push(e)
+        let result = [];
+        result.push(this.engine_num); //index 0
+        result.push("|");
+        this.positions.forEach((e) => result.push(e+",")) //index 1
+        result.push("|");
+        this.positions2.forEach((e) => result.push(e+",")) //index 2
+        result.push("|");
+        this.palette_pos.forEach((e) => result.push(e+",")) // index 3
+        result.push("|");
+        this.matricks.forEach((e) => result.push(e+",")) // index 4
+        result.push("|");
+        this.phasers.forEach((e) => result.push(e+",")) // index 5
+        result.push("|");
+        result.push(this.group_linear) // index 6
+        result.push("|");
+        result.push(this.group_grid) // index 7
+        result.push("|");
+        result.push(this.installed) // index 8
+        return result.join("")
+    }
+    fromstring(input: string) {
+        if (input == undefined) {
+            return -1
+        }
+        let input_split = input.split("|");
+        let engine_ = new engine(parseFloat(input_split[0]));
+        engine_.positions = input_split[1].split(",").map(function(item){
+            return parseFloat(item)
+        })
+        engine_.positions2 = input_split[2].split(",").map(function(item){
+            return parseFloat(item)
+        })
+        engine_.palette_pos = input_split[3].split(",").map(function(item){
+            return parseFloat(item)
+        })
+        engine_.matricks = input_split[4].split(",").map(function(item){
+            return parseFloat(item)
         })
 
-        return dict.join(",") // engine_num , length pos array , pos array, 
-    }
-    fromstring() {
+        engine_.group_linear = parseFloat(input_split[6])
+        engine_.group_grid = parseFloat(input_split[7])
+        engine_.installed = Boolean(input_split[8])
 
     }
 
@@ -89,18 +122,21 @@ export class engine {
     create_engine(track: tracker, static_: statics){
         for (let i = 0; i<2; i++){ // create custom palettes for flyout 
             Cmd("Store preset 2."+track.curr_pos+" /nc");
-            Cmd("Store label 2."+track.curr_pos+" POS_ENGINE_"+this.engine_num+"_PALETTE_"+(i+1)+" /nc");
-            this.palette_pos[i] = track.curr_pos;
+            Cmd("Label preset 2."+track.curr_pos+" POS_ENGINE_"+this.engine_num+"_PALETTE_"+(i+1)+" /nc");
+            this.palette_pos.push(track.curr_pos);
             track.increment_pos();
         }
-        for (let pos_no in static_.positions){ // Create positon sequences 
+        static_.positions.forEach((pos_no) => { //TODO: fix position iterator (right now it is wrong )
             remove("sequence", track.curr_sequence);
-            Cmd("Store sequence "+track.curr_sequence+" /r")
+            Cmd("Store sequence "+track.curr_sequence+" /nc")
             Cmd("Assign preset 2." + pos_no + " at sequence " + track.curr_sequence + " cue 1 part 0.*")
 
             this.positions.push(track.curr_appearance)
             track.increment_sequence();
-        }
+        })
+
+        this.installed = true;
+
     }
 
 }
@@ -133,12 +169,14 @@ export class tracker { //TODO: add tracker for: all1, matricks. And create funct
     curr_macro: number;
     curr_pos: number;
     curr_appearance: number;
+    curr_matricks: number; 
 
-    constructor(start_sequence: number, start_macro: number, curr_pos: number, start_appearance: number){
+    constructor(start_sequence: number, start_macro: number, curr_pos: number, start_appearance: number, matricks: number){
         this.curr_sequence = start_sequence;
         this.curr_macro = start_macro;
         this.curr_pos = curr_pos;
         this.curr_appearance = start_appearance;
+        this.curr_matricks = matricks; 
     };
 
     increment_sequence(){
@@ -153,6 +191,10 @@ export class tracker { //TODO: add tracker for: all1, matricks. And create funct
     increment_appearance(){
         this.curr_appearance = this.curr_appearance + 1;
     }
+    increment_matricks(){
+        this.curr_matricks = this.curr_matricks + 1; 
+    }
+
 
     tostring(){
         return [this.curr_sequence, this.curr_macro, this.curr_pos].join(",") 
@@ -171,12 +213,12 @@ export function trackerfromstring(string: string | undefined){
     let curr_sequence = parseFloat(s[0]);
     let curr_macro = parseFloat(s[1]);
     let curr_pos = parseFloat(s[2]);
-    return new tracker(curr_sequence, curr_macro, curr_pos, 100);
+    return new tracker(curr_sequence, curr_macro, curr_pos, 100, 100);
 }
 
 export class statics { // Class containing static content for this plugin //TODO: add remote control for OnStartup sequence 
     positions: number[] = [-1,-1]; //Begin and end number of positions in position palette 
-    appearances: {[key: string]: number} = {}; // key = position + on off indicator, value = position on appearances palette 
+    appearances: {[key: string]: number|undefined} = {}; // key = position + on off indicator, value = position on appearances palette 
     position_types: {[key: number]: string} = {
         0: "LOWFRONT",
         1: "LOWPOINT",
@@ -207,10 +249,35 @@ export class statics { // Class containing static content for this plugin //TODO
     }
 
     tostring(){
-        return this.positions.join(",")
-    }
-    fromstring() {
+        let result = [];
+        this.positions.forEach((e) => {
+            result.push(e+",")
+        })
+        result.push("|")
+        Object.keys(this.appearances).forEach((e) => {
+            let v = this.appearances[e]
+            result.push(e+":"+v+",")
+        })
 
+        return result.join("")
+    }
+    fromstring(input: string | undefined) {
+        if (input == undefined) {
+            return -1;
+        }
+        let input_split = input.split("|")
+        let positions: number[] = [];
+        let appearances: {[key: string]: number|undefined} = {}
+
+        input_split[0].split(",").forEach((e) => positions.push(parseFloat(e)))
+        
+        input_split[1].split(",").forEach((v) => {
+            let v_split = v.split(":");
+            appearances[v_split[0]] = tonumber(v_split[1]);
+        })
+        let new_static = new statics()
+        new_static.appearances = appearances;
+        new_static.positions = positions;
     }
 
     create_appearances(track: tracker){ //will create appearances and add them to statics class

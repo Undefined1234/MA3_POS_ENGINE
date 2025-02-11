@@ -37,7 +37,21 @@ function main(this: void, displayHandle: Display, argument: string) {
                 let input = MessageBox(options)
                 
                 log.trace("main(): Creating empty engines")
-                let engines: Array<engine> = [new engine(1), new engine(2)];
+                let prefix = "POS_ENGINE_ENGINE_"
+                let engines: engine[] = []
+                
+                for (let i = 1; i < 3; i++){
+                    let varname = prefix + i;
+                    let varcontent = GetVar(UserVars(), varname);
+                    if (varcontent == undefined){
+                        log.info("Main(): Engine" + i + " was not found, new engine will be initialized")
+                        engines.push(new engine(i))
+                    } else {
+                        let engine_ = new engine(i);
+                        engine_.fromstring(varcontent)
+                        engines.push(engine_)
+                    }
+                }
 
                 log.trace("main(): Assigning groups to engines")
                 if (input.result == 1) {
@@ -49,7 +63,11 @@ function main(this: void, displayHandle: Display, argument: string) {
                     });
                     
                     let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
-                    let statics_ = //TODO finish statics_
+                    let statics_ = new statics()
+                    if (statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS")) == -1) {
+                        StopProgress
+                        error("No statics variable found, please reinstall the tool")
+                    }
                     engines.forEach(e => {
                         e.create_engine(track, statics_)
                     })
@@ -65,7 +83,7 @@ function main(this: void, displayHandle: Display, argument: string) {
         ImageLibraryInstaller(log).onInstall();
         log.trace("main(): prepeare objects");
 
-        let track = new tracker(100, 100, 100, 100); //TODO make start point dynamic 
+        let track = new tracker(100, 100, 100, 100, 100); //TODO make start point dynamic 
         let statics_ = new statics();
 
         log.trace("main(): Creating appearances");
@@ -76,8 +94,8 @@ function main(this: void, displayHandle: Display, argument: string) {
 
         // setting some vars
         SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
-        SetVar(UserVars(),"POS_ENGINE_PRESET", statics_.tostring());
-        //SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
+        SetVar(UserVars(),"POS_ENGINE_STATICS", statics_.tostring());
+        SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
         log.trace("main(): Engines prepared and ready for initialization")
     }
 }

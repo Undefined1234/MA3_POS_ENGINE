@@ -8,8 +8,8 @@ import {  imageBase64 as MIDFRONTA} from "./__MIDFRONTA"
 import {  imageBase64 as MIDFRONTI} from "./__MIDFRONTI"
 import {  imageBase64 as MIDPOINTA} from "./__MIDPOINTA"
 import {  imageBase64 as MIDPOINTI} from "./__MIDPOINTI"
-import {  imageBase64 as MIDPSREADA} from "./__MIDPSREADA"
-import {  imageBase64 as MIDPSREADI} from "./__MIDPSREADI"
+import {  imageBase64 as MIDSPREADA} from "./__MIDSPREADA"
+import {  imageBase64 as MIDSPREADI} from "./__MIDSPREADI"
 import {  imageBase64 as POS1A} from "./__POS1A"
 import {  imageBase64 as POS1I} from "./__POS1I"
 import {  imageBase64 as POS2A} from "./__POS2A"
@@ -35,8 +35,8 @@ export type ImageKey = "LOWFRONTA" |
 	"MIDFRONTI" |
 	"MIDPOINTA" |
 	"MIDPOINTI" |
-	"MIDPSREADA" |
-	"MIDPSREADI" |
+	"MIDSPREADA" |
+	"MIDSPREADI" |
 	"POS1A" |
 	"POS1I" |
 	"POS2A" |
@@ -63,8 +63,8 @@ export const images: {[key in ImageKey]: {fileName: string, imageBase64: string}
 	MIDFRONTI: { fileName: "MIDFRONTI.png", imageBase64: MIDFRONTI },
 	MIDPOINTA: { fileName: "MIDPOINTA.png", imageBase64: MIDPOINTA },
 	MIDPOINTI: { fileName: "MIDPOINTI.png", imageBase64: MIDPOINTI },
-	MIDPSREADA: { fileName: "MIDPSREADA.png", imageBase64: MIDPSREADA },
-	MIDPSREADI: { fileName: "MIDPSREADI.png", imageBase64: MIDPSREADI },
+	MIDSPREADA: { fileName: "MIDSPREADA.png", imageBase64: MIDSPREADA },
+	MIDSPREADI: { fileName: "MIDSPREADI.png", imageBase64: MIDSPREADI },
 	POS1A: { fileName: "POS1A.png", imageBase64: POS1A },
 	POS1I: { fileName: "POS1I.png", imageBase64: POS1I },
 	POS2A: { fileName: "POS2A.png", imageBase64: POS2A },

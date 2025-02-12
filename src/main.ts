@@ -11,16 +11,39 @@ function main(this: void, displayHandle: Display, argument: string) {
     log.trace("main(): Plugin started")
 
     if (GetVar(UserVars(), "POS_ENGINE_INSTALLED")){
-        switch (argument) {
+        let parsed: string;
+        if (argument != null){
+            parsed = argument.split("_")[0];
+        }else {
+            parsed = "dialog"
+        }
+        log.trace(parsed)
+        switch (parsed) {
             case "uninstall": {
                 ImageLibraryInstaller(log).onUninstall()
                 break
             }
             case "startshow": { // objects should be loaded here
-
             }
-            case null: {
-                    
+            case "switch": {
+                let input = argument.split("_")[1]
+                let list = input.split("|").map(function(e){return parseFloat(e)});
+                const active = list.pop()
+                log.trace("switch(): Active sequence " + tostring(active))
+                if (active == undefined){
+                    error("Switch():No proper format given to switch")
+                    break
+                    return
+                }
+                let active_appearance = DataPool()[6][active-1]?.appearance.name
+                active_appearance = (active_appearance == undefined)? "":active_appearance
+                Cmd("Assign appearance "+[active_appearance.slice(0,-1), "A"].join("")+" at sequence "+active)
+                list.forEach((e) => {
+                    Cmd("Assign appearance "+[DataPool()[6][e-1].appearance.name.slice(0,-1), "I"].join("")+" at sequence "+e)
+                })
+                break
+            }
+            case "dialog": {      
                 let options = {
                     title: "Setup",
                     commands: [
@@ -68,7 +91,11 @@ function main(this: void, displayHandle: Display, argument: string) {
                         StopProgress
                         error("No statics variable found, please reinstall the tool")
                     }
-                    engines.forEach(e => {
+                    
+                    engines.forEach((e, i) => {
+                        log.trace(input.inputs["Group 1 Linear"])
+                        e.group_linear = parseFloat(input.inputs["Group 1 Linear"])
+                        e.group_grid = parseFloat(input.inputs["Group 1 Grid"])
                         e.create_engine(track, statics_)
                     })
                 }

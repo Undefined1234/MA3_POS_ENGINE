@@ -56,9 +56,9 @@ export class item {
 export class engine {
     engine_num: number; //Engine number
     positions: Array<number> = []; //Positions for physical adjustment
-    positions2!: Array<number>; //Positions for step 2 of template presets
+    positions2: Array<number> = []; //Positions for step 2 of template presets
     palette_pos: Array<number> = []; //Palettes for step 1 and 2 (respectively) of the phaser effects
-    matricks!: Array<number>; // MAtricks for position, flyouts, movements respectively 
+    matricks: Array<number> = [-1, -1, -1] // MAtricks for position, flyouts, movements respectively 
     phasers!: Array<phaser>; //Phaser effects 
     group_linear!: number; //Linear group
     group_grid!: number; //Grid group
@@ -126,16 +126,56 @@ export class engine {
             this.palette_pos.push(track.curr_pos);
             track.increment_pos();
         }
-        static_.positions.forEach((pos_no) => { //TODO: fix position iterator (right now it is wrong )
+        //TODO: Create flyouts
+        for (let i = 0; i<this.matricks.length; i++){ // create matricks 
+            let curr_matrick = track.curr_matricks
+            remove("matricks", curr_matrick)
+            Cmd("Store matricks "+curr_matrick+" /nc")
+            Cmd("Label matricks "+curr_matrick+" POS_ENGINE_MATRICKS_E" + tostring(this.engine_num))
+            this.matricks[i] = curr_matrick
+            track.increment_matricks();
+        }
+        this.phasers.forEach((e) => {//create phasers 
+            
+        })
+
+        //TODO: First finalize presets (matricks etc)
+        let i = 0; //Increment parameter for appearances
+        for (let pos_no = static_.positions[0]; pos_no < static_.positions[1]; pos_no++){ //Create positions 
             remove("sequence", track.curr_sequence);
             Cmd("Store sequence "+track.curr_sequence+" /nc")
-            Cmd("Assign preset 2." + pos_no + " at sequence " + track.curr_sequence + " cue 1 part 0.*")
+            Cmd("Assign preset 2." + pos_no + " at sequence " + track.curr_sequence + " cue 1 part 0.1")
+            Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
+            Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
+            i = i+1
+            Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
 
-            this.positions.push(track.curr_appearance)
+            this.positions.push(track.curr_sequence)
             track.increment_sequence();
+        }
+        this.positions.forEach((pos_no, i) => {//creating toggle appearances 
+            const pos_preset = static_.positions[0]+i //position beloging to sequence
+            DataPool()[6][pos_no-1][2][0].command = "copy preset 2."+pos_preset+ " at preset 2."+this.palette_pos[0] + "/nc ; " + create_toggle_command(pos_no, this.positions);
+        })
+
+        i = 0; //Increment parameter for appearances
+        for (let pos_no = static_.positions[0]; pos_no < static_.positions[1]; pos_no++){ //Create positions 2 for second palette
+            remove("sequence", track.curr_sequence);
+            Cmd("Store sequence "+track.curr_sequence+" /nc")
+            Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
+            Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
+            i = i+1
+            Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
+            this.positions2.push(track.curr_sequence)
+            track.increment_sequence();
+        }
+        this.positions2.forEach((pos_no, i) => {//creating toggle appearances 
+            const pos_preset = static_.positions[0]+i //position beloging to sequence
+            DataPool()[6][pos_no-1][2][0].command = "copy preset 2."+pos_preset+ " at preset 2."+this.palette_pos[1] + "/nc ; " + create_toggle_command(pos_no, this.positions2);
         })
 
         this.installed = true;
+
 
     }
 
@@ -275,9 +315,8 @@ export class statics { // Class containing static content for this plugin //TODO
             let v_split = v.split(":");
             appearances[v_split[0]] = tonumber(v_split[1]);
         })
-        let new_static = new statics()
-        new_static.appearances = appearances;
-        new_static.positions = positions;
+        this.appearances = appearances;
+        this.positions = positions;
     }
 
     create_appearances(track: tracker){ //will create appearances and add them to statics class
@@ -314,4 +353,16 @@ export function parse_engines(){ // will find engines in variable list and retur
 
 function remove(type: string, no: number){
     Cmd("Delete "+ type + " " + no + " /nc");
+}
+
+function create_toggle_command(current_no: number, input_list: number[]){
+    let command = []
+    input_list.forEach((e) =>{ //Creating command where active item is on the last
+        if (e != current_no){
+            command.push(e)
+        }
+    })
+    command.push(current_no)
+    return "call plugin 1 switch_" + command.join("|")
+
 }

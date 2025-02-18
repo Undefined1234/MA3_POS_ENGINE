@@ -24,6 +24,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                 break
             }
             case "startshow": { // objects should be loaded here
+                break
             }
             case "switch": {
                 let input = argument.split("_")[1]
@@ -46,9 +47,11 @@ function main(this: void, displayHandle: Display, argument: string) {
             case "dialog": {      
                 let options = {
                     title: "Setup",
+                    display: 1,
                     commands: [
                         {value: 0, name: "Cancel"},
                         {value: 1, name: "Update"},
+                        {value: 2, name: "Phasers"}
                     ],
                     inputs: [
                         {name: "Group 1 Linear", value: "1", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
@@ -78,29 +81,76 @@ function main(this: void, displayHandle: Display, argument: string) {
                 }
 
                 log.trace("main(): Assigning groups to engines")
-                if (input.result == 1) {
-                    Object.keys(input.inputs).forEach((e) => {
-                        if ((input.inputs[e] != "")){
-                            let index = parseFloat(e.split(" ")[1]);
-                            engines[index-1].engine_num = parseFloat(input.inputs[e])
-                        }
-                    });
-                    
-                    let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
-                    let statics_ = new statics()
-                    if (statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS")) == -1) {
-                        StopProgress
-                        error("No statics variable found, please reinstall the tool")
+                switch (input.result){
+                    case (1): {
+                            Object.keys(input.inputs).forEach((e) => {
+                                if ((input.inputs[e] != "")){
+                                    let index = parseFloat(e.split(" ")[1]);
+                                    engines[index-1].engine_num = parseFloat(input.inputs[e])
+                                }
+                            });
+                            
+                            let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
+                            let statics_ = new statics()
+                            if (statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS")) == -1) {
+                                StopProgress
+                                error("No statics variable found, please reinstall the tool")
+                            }
+                            log.trace("main(): Creating engines")
+                            engines.forEach((e, i) => {
+                                log.trace(input.inputs["Group 1 Linear"])
+                                e.group_linear = parseFloat(input.inputs["Group 1 Linear"])
+                                e.group_grid = parseFloat(input.inputs["Group 1 Grid"])
+                                e.create_engine(track, statics_, parse_phasers())
+                            })
+                        break
                     }
-                    log.trace("main(): Creating engines")
-                    engines.forEach((e, i) => {
-                        log.trace(input.inputs["Group 1 Linear"])
-                        e.group_linear = parseFloat(input.inputs["Group 1 Linear"])
-                        e.group_grid = parseFloat(input.inputs["Group 1 Grid"])
-                        e.create_engine(track, statics_, parse_phasers())
-                    })
+                    case(2): {
+                        let phaserlist = parse_phasers();
+                        let inputs: {name:string, value:string}[] = []
+                        phaserlist.forEach(e => {
+                            Object.keys(e.props).forEach(ee => {
+                                inputs.push({name: ee, value: tostring(e.props[ee])})
+                            })
+                        });
+                        let options = {
+                            title: "Phasers",
+                            commands: [
+                                {value: 0, name: "Cancel"},
+                            ], 
+                            display: 2,
+                        }
+                        phaserlist.forEach((e,i) => {
+                            options.commands.push({value:i+1, name: "Phaser:"+tostring(i+1)})
+                        })
+                        let result2 = MessageBox(options)
+                        switch (result2.result){
+                            case(0): {
+                                break
+                            }
+                            default: {
+                                let selectedphaser = phaserlist[result2.result - 1]
+                                let inputs: {name:string, value:string}[] = []
+                                Object.keys(selectedphaser.props).forEach(e =>{
+                                    inputs.push({name:e, value: tostring(selectedphaser.props[e])})
+                                })
+                                let options = {
+                                    title: "Phaser",
+                                    commands: [
+                                        {value: 0, name: "Cancel"},
+                                        {value: 1, name: "Update"},
+                                    ],
+                                    inputs: inputs
+                                }
+                                let result3 = MessageBox(options)
+                                break
+                            }
+                        }
+
+                    }
                 }
-            break  
+
+                break  
             }
         }
     }else{

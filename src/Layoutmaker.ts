@@ -263,11 +263,11 @@ export class phaser { //TODO: Make phasers more general
 
     fromstring(input: string) { //TODO fix read from string 
         let result = input.split("|")
-        this.step1_width = parseFloat(result[0])
-        this.step2_width = parseFloat(result[1])
-        this.step1_transistion = parseFloat(result[2])
-        this.step2_transistion = parseFloat(result[3])
-        this.effect = result[4]
+        let proplist = result[0].split(',')
+        Object.values(this.props).map(function(e, i) {
+            return e = parseFloat(proplist[i])
+        })
+        this.effect = result[1]
     }
     tostring(): string {
         let result: string[] = []

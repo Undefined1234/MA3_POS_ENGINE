@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker} from "./Layoutmaker"
+import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -51,11 +51,12 @@ function main(this: void, displayHandle: Display, argument: string) {
                         {value: 1, name: "Update"},
                     ],
                     inputs: [
-                        {name: "Group 1 Linear", value: "gr1"},
-                        {name: "Group 1 Grid", value: "gr2"},
-                        {name: "Group 2 Linear", value:"gr3"},
-                        {name: "Group 2 Grid", value:"gr4"}
-                    ]
+                        {name: "Group 1 Linear", value: "1", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
+                        {name: "Group 1 Grid", value: "2", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
+                        {name: "Group 2 Linear", value:"3", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
+                        {name: "Group 2 Grid", value:"4", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"}
+                    ],
+                    
                 }
                 let input = MessageBox(options)
                 
@@ -79,7 +80,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                 log.trace("main(): Assigning groups to engines")
                 if (input.result == 1) {
                     Object.keys(input.inputs).forEach((e) => {
-                        if ((input.inputs[e] && e)){
+                        if ((input.inputs[e] != "")){
                             let index = parseFloat(e.split(" ")[1]);
                             engines[index-1].engine_num = parseFloat(input.inputs[e])
                         }
@@ -91,12 +92,12 @@ function main(this: void, displayHandle: Display, argument: string) {
                         StopProgress
                         error("No statics variable found, please reinstall the tool")
                     }
-                    
+                    log.trace("main(): Creating engines")
                     engines.forEach((e, i) => {
                         log.trace(input.inputs["Group 1 Linear"])
                         e.group_linear = parseFloat(input.inputs["Group 1 Linear"])
                         e.group_grid = parseFloat(input.inputs["Group 1 Grid"])
-                        e.create_engine(track, statics_)
+                        e.create_engine(track, statics_, parse_phasers())
                     })
                 }
             break  
@@ -110,7 +111,7 @@ function main(this: void, displayHandle: Display, argument: string) {
         ImageLibraryInstaller(log).onInstall();
         log.trace("main(): prepeare objects");
 
-        let track = new tracker(100, 100, 100, 100, 100); //TODO make start point dynamic 
+        let track = new tracker(100, 100, 100, 100, 100, 100); //TODO make start point dynamic 
         let statics_ = new statics();
 
         log.trace("main(): Creating appearances");
@@ -118,8 +119,11 @@ function main(this: void, displayHandle: Display, argument: string) {
 
         log.trace("main(): Creating poalettes");
         create_position_palettes(track, statics_);
-
-        // setting some vars
+        create_general_sequences(track, statics_);
+        // Creating standard phasers
+        SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1).tostring())
+        SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2).tostring())
+        // Setting some vars
         SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
         SetVar(UserVars(),"POS_ENGINE_STATICS", statics_.tostring());
         SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)

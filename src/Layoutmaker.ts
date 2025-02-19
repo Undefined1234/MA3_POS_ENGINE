@@ -133,7 +133,6 @@ export class engine {
             track.increment_pos();
         }
 
-        //TODO: Create flyouts
         phasers.forEach((e) => {
             let input = {
                 group_no: this.group_grid,
@@ -157,7 +156,6 @@ export class engine {
             track.increment_matricks();
         }
 
-        //TODO: First finalize presets (matricks etc)
         let i = 0; //Increment parameter for appearances
         for (let pos_no = static_.positions[0]; pos_no < static_.positions[1]; pos_no++){ //Create positions 
             remove("sequence", track.curr_sequence);
@@ -192,9 +190,10 @@ export class engine {
             DataPool()[6][pos_no-1][2][0]!.command = "copy preset 2."+pos_preset+ " at preset 2."+this.palette_pos[1] + "/nc ; " + create_toggle_command(pos_no, this.positions2);
         })
 
+        //TODO: start with flyout/movement mechanism (one executor/sequence for all flyouts and movements)
+
+
         this.installed = true;
-
-
     }
 
 }
@@ -207,7 +206,7 @@ declare interface phaser_creation {
     store_no: number; //Must be the relative adress of the All1 datapool 
 }
 
-export class phaser { //TODO: Make phasers more general 
+export class phaser {
     phaser_no?: number; 
     effect: string = "flyout";
     props: {[key: string]: number} = {
@@ -261,7 +260,7 @@ export class phaser { //TODO: Make phasers more general
         return true
     }
 
-    fromstring(input: string) { //TODO fix read from string 
+    fromstring(input: string) {
         let result = input.split("|")
         let proplist = result[0].split(',')
         Object.values(this.props).map(function(e, i) {
@@ -281,7 +280,7 @@ export class phaser { //TODO: Make phasers more general
     }
 }
 
-export class tracker { //TODO: add tracker for: all1, matricks. And create function that loops through start point and finds first available free spot. 
+export class tracker { 
     start_image = 100; 
     curr_sequence: number;
     curr_macro: number;
@@ -430,10 +429,18 @@ export class statics { // Class containing static content for this plugin //TODO
     }
 }
 
+//MA3 functions
 export function clearprogrammer() { //TODO: extend clearprogrammer to really be clear 
     Cmd("clear; clear; clear")
 }
+function remove(type: string, no: number){//Remove an item in the DataPool
+    Cmd("Delete "+ type + " " + no + " /nc");
+}
+function get_new_cue(sequence_no: number): number{//Creates a new cue in a sequence and returns its index
+//TODO: finish get new cue function
+}
 
+//Initialisation functions
 export function create_position_palettes(track: tracker, statics_: statics){
     statics_.set_position_start(track.curr_pos)
     Object.values(statics_.position_types).forEach(p => {
@@ -456,6 +463,8 @@ export function create_general_sequences(track: tracker, statics_: statics){
     track.increment_sequence()
 }
 
+
+//GET functions
 export function parse_engines(){ // will find engines in variable list and return array with all engines
 
 }
@@ -474,11 +483,9 @@ export function parse_phasers(): Array<phaser>{// will find phaser effects that 
     }
     return found
 }
-function remove(type: string, no: number){
-    Cmd("Delete "+ type + " " + no + " /nc");
-}
 
-function create_toggle_command(current_no: number, input_list: number[]){
+//Other functions 
+function create_toggle_command(current_no: number, input_list: number[]){//Creates command for switch plugin
     let command = []
     input_list.forEach((e) =>{ //Creating command where active item is on the last
         if (e != current_no){

@@ -83,12 +83,12 @@ function main(this: void, displayHandle: Display, argument: string) {
                 log.trace("main(): Assigning groups to engines")
                 switch (input.result){
                     case (1): {
-                            Object.keys(input.inputs).forEach((e) => {
-                                if ((input.inputs[e] != "")){
-                                    let index = parseFloat(e.split(" ")[1]);
-                                    engines[index-1].engine_num = parseFloat(input.inputs[e])
-                                }
-                            });
+                            // Object.keys(input.inputs).forEach((e) => {
+                            //     if ((input.inputs[e] != "")){
+                            //         let index = parseFloat(e.split(" ")[1]);
+                            //         engines[index-1].engine_num = parseFloat(input.inputs[e])
+                            //     }
+                            // });
                             
                             let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
                             let statics_ = new statics()
@@ -98,9 +98,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                             }
                             log.trace("main(): Creating engines")
                             engines.forEach((e, i) => {
-                                log.trace(input.inputs["Group 1 Linear"])
-                                e.group_linear = parseFloat(input.inputs["Group 1 Linear"])
-                                e.group_grid = parseFloat(input.inputs["Group 1 Grid"])
+                                e.group_linear = parseFloat(input.inputs["Group "+(i+1)+" Linear"])
+                                e.group_grid = parseFloat(input.inputs["Group "+(i+1)+" Grid"])
                                 e.create_engine(track, statics_, parse_phasers())
                             })
                         break
@@ -171,8 +170,8 @@ function main(this: void, displayHandle: Display, argument: string) {
         create_position_palettes(track, statics_);
         create_general_sequences(track, statics_);
         // Creating standard phasers
-        SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1).tostring())
-        SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2).tostring())
+        SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1,"phaser1").tostring())
+        SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2, "phaser2").tostring())
         // Setting some vars
         SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
         SetVar(UserVars(),"POS_ENGINE_STATICS", statics_.tostring());

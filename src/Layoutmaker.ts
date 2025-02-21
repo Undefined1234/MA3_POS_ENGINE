@@ -60,8 +60,16 @@ export class engine {
     palette_pos: Array<number> = []; //Palettes for step 1 and 2 (respectively) of the phaser effects
     matricks: Array<number> = [-1, -1, -1] // MAtricks for position, flyouts, movements respectively 
     phasers: Array<number> = []; //Phaser effects in All1 DataPool 
+    phaser_assigns: Array<number> = []; //macros that assign phasers to sequence 
     group_linear!: number; //Linear group
     group_grid!: number; //Grid group
+    macros: {[key: string]: number} ={//TODO add to string parser and getter
+        set_grid: -1, //set sequence recipe group to grid
+        set_linear: -1, //set sequence recipe group to linear
+        set_circle: -1, //set movement sequence cue X part value to circle
+        set_pan: -1, //set movement sequence cue X part value to pan
+        set_tilt: -1, //set movement sequence cue X part value to tilt
+    }
     installed: boolean = false; //boolean that will check whether the engine is installed in MA3
 
     constructor(engine_num: number){
@@ -133,7 +141,7 @@ export class engine {
             track.increment_pos();
         }
 
-        phasers.forEach((e) => {
+        phasers.forEach((e) => { //create phasers for engine
             let input = {
                 group_no: this.group_grid,
                 engine_no: this.engine_num,
@@ -191,7 +199,19 @@ export class engine {
         })
 
         //TODO: start with flyout/movement mechanism (one executor/sequence for all flyouts and movements)
-
+        while (DataPool()[6][static_.sequences["flyout"]-1][2][0].Children().length<=this.engine_num){
+            DataPool()[6][static_.sequences["flyout"]-1][2][0].Aquire()
+        }
+        DataPool()[6][static_.sequences["flyout"]-1][2][0].Children()[this.engine_num-1].selection = DataPool()[5].Get(this.group_grid)
+        this.phasers.forEach((e, i) => { //Creating macros for position dependend phaser effects 
+            DataPool()[8].Remove(track.curr_macro)
+            let macro = DataPool()[8].Create(track.curr_macro)
+            let preset = DataPool()[4][21].Get(e)
+            macro.name = "POS_ENGINE_"+this.engine_num+"_SET_"+phasers[i].phaser_name
+            macro.CommandStore()
+            macro.Children()[0].command = "Assign preset 21."+preset.index+" at sequence "+static_.sequences["flyout"]+" cue 1 part 0."+this.engine_num
+            track.inrement_macro()
+        })
 
         this.installed = true;
     }
@@ -207,6 +227,7 @@ declare interface phaser_creation {
 }
 
 export class phaser {
+    phaser_name?: string;
     phaser_no?: number; 
     effect: string = "flyout";
     props: {[key: string]: number} = {
@@ -219,8 +240,9 @@ export class phaser {
         step1_transistion_d: 20,
         step2_transistion_d: 20,
     }
-    constructor(phaser_no?: number) {
+    constructor(phaser_no?: number, name?:string) {
         this.phaser_no = phaser_no;
+        this.phaser_name = name
     }
 
     create_phaser(inputs: phaser_creation): boolean{
@@ -262,14 +284,17 @@ export class phaser {
 
     fromstring(input: string) {
         let result = input.split("|")
-        let proplist = result[0].split(',')
+        this.phaser_name = result[0]
+        let proplist = result[1].split(',')
         Object.values(this.props).map(function(e, i) {
             return e = parseFloat(proplist[i])
         })
-        this.effect = result[1]
+        this.effect = result[2]
     }
     tostring(): string {
         let result: string[] = []
+        result.push(this.phaser_name || "noname")
+        result.push("|")
         Object.values(this.props).forEach((e) => {
             result.push(tostring(e))
             result.push(",")
@@ -436,8 +461,9 @@ export function clearprogrammer() { //TODO: extend clearprogrammer to really be 
 function remove(type: string, no: number){//Remove an item in the DataPool
     Cmd("Delete "+ type + " " + no + " /nc");
 }
-function get_new_cue(sequence_no: number): number{//Creates a new cue in a sequence and returns its index
+function new_cue_by_index(sequence_no: number): number{//Creates a new cue at given index
 //TODO: finish get new cue function
+return -1
 }
 
 //Initialisation functions

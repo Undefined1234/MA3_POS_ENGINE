@@ -54,15 +54,15 @@ export class item {
 }
 
 export class engine {
-    engine_num: number; //Engine number
+    engine_num: number = -1; //Engine number
     positions: Array<number> = []; //Positions for physical adjustment
     positions2: Array<number> = []; //Positions for step 2 of template presets
     palette_pos: Array<number> = []; //Palettes for step 1 and 2 (respectively) of the phaser effects
     matricks: Array<number> = [-1, -1, -1] // MAtricks for position, flyouts, movements respectively 
     phasers: Array<number> = []; //Phaser effects in All1 DataPool 
     phaser_assigns: Array<number> = []; //macros that assign phasers to sequence 
-    group_linear!: number; //Linear group
-    group_grid!: number; //Grid group
+    group_linear: number = -1 ; //Linear group
+    group_grid: number = -1; //Grid group
     macros: {[key: string]: number} ={//TODO add to string parser and getter
         set_grid: -1, //set sequence recipe group to grid
         set_linear: -1, //set sequence recipe group to linear
@@ -70,7 +70,7 @@ export class engine {
         set_pan: -1, //set movement sequence cue X part value to pan
         set_tilt: -1, //set movement sequence cue X part value to tilt
     }
-    installed: boolean = false; //boolean that will check whether the engine is installed in MA3
+    installed: number = 0; //boolean that will check whether the engine is installed in MA3
 
     constructor(engine_num: number){
         this.engine_num = engine_num
@@ -80,15 +80,25 @@ export class engine {
         let result = [];
         result.push(this.engine_num); //index 0
         result.push("|");
-        this.positions.forEach((e) => result.push(e+",")) //index 1
+        if (this.positions.length > 0){
+            this.positions.forEach((e) => result.push(e+",")) //index 1
+        }else{result.push('-1,')}
         result.push("|");
-        this.positions2.forEach((e) => result.push(e+",")) //index 2
+        if (this.positions2.length > 0){
+            this.positions2.forEach((e) => result.push(e+",")) //index 1
+        }else{result.push('-1,')} //index 2
         result.push("|");
-        this.palette_pos.forEach((e) => result.push(e+",")) // index 3
+        if (this.palette_pos.length > 0){
+            this.palette_pos.forEach((e) => result.push(e+",")) //index 1
+        }else{result.push('-1,')} // index 3
         result.push("|");
-        this.matricks.forEach((e) => result.push(e+",")) // index 4
+        if (this.matricks.length > 0){
+            this.matricks.forEach((e) => result.push(e+",")) //index 1
+        }else{result.push('-1,')} // index 4
         result.push("|");
-        this.phasers.forEach((e) => result.push(e+",")) // index 5
+        if (this.phasers.length > 0){
+            this.phasers.forEach((e) => result.push(e+",")) //index 1
+        }else{result.push('-1,')} // index 5
         result.push("|");
         result.push(this.group_linear) // index 6
         result.push("|");
@@ -97,7 +107,7 @@ export class engine {
         result.push(this.installed) // index 8
         return result.join("")
     }
-    fromstring(input: string) {
+    fromstring(input: string | undefined) {
         if (input == undefined) {
             return -1
         }
@@ -105,23 +115,24 @@ export class engine {
         let engine_ = new engine(parseFloat(input_split[0]));
         engine_.positions = input_split[1].split(",").map(function(item){
             return parseFloat(item)
-        })
+        }).filter(function(x){return x > 0})
         engine_.positions2 = input_split[2].split(",").map(function(item){
             return parseFloat(item)
-        })
+        }).filter(function(x){return x > 0})
         engine_.palette_pos = input_split[3].split(",").map(function(item){
             return parseFloat(item)
-        })
+        }).filter(function(x){return x > 0})
         engine_.matricks = input_split[4].split(",").map(function(item){
             return parseFloat(item)
-        })
+        }).filter(function(x){return x > 0})
         engine_.phasers = input_split[5].split(",").map(function(item){
             return parseFloat(item)
-        })
+        }).filter(function(x){return x > 0})
 
         engine_.group_linear = parseFloat(input_split[6])
         engine_.group_grid = parseFloat(input_split[7])
-        engine_.installed = Boolean(input_split[8])
+        engine_.installed = parseFloat(input_split[8])
+
 
     }
 
@@ -199,9 +210,10 @@ export class engine {
         })
 
         //TODO: start with flyout/movement mechanism (one executor/sequence for all flyouts and movements)
-        while (DataPool()[6][static_.sequences["flyout"]-1][2][0].Children().length<=this.engine_num){
+        while (DataPool()[6][static_.sequences["flyout"]-1][2][0].Children().length<this.engine_num){
             DataPool()[6][static_.sequences["flyout"]-1][2][0].Aquire()
         }
+
         DataPool()[6][static_.sequences["flyout"]-1][2][0].Children()[this.engine_num-1].selection = DataPool()[5].Get(this.group_grid)
         this.phasers.forEach((e, i) => { //Creating macros for position dependend phaser effects 
             DataPool()[8].Remove(track.curr_macro)
@@ -213,7 +225,7 @@ export class engine {
             track.inrement_macro()
         })
 
-        this.installed = true;
+        this.installed = 1;
     }
 
 }
@@ -341,6 +353,9 @@ export class tracker {
     increment_all1(){
         this.curr_all1 = this.curr_all1 + 1;
     }
+    increment_macro(){
+        this.curr_macro = this.curr_macro + 1;
+    }
 
 
     tostring(){
@@ -443,7 +458,7 @@ export class statics { // Class containing static content for this plugin //TODO
     create_appearances(track: tracker){ //will create appearances and add them to statics class
         let i = track.start_image; 
         for (let j = 0; j<2*Object.keys(this.position_types).length+Object.keys(this.group_types).length; j++) {
-            Cmd("Assign image 3."+i+" at appearance "+ track.curr_appearance);
+            Cmd("Assign image 3."+i+" at appearance "+ track.curr_appearance+" /nc /o");
             let name = ShowData().Appearances[track.curr_appearance - 1].name; 
             let name_list = name.split("_");
             ShowData().Appearances[track.curr_appearance - 1].name = name_list.slice(-2)[0]
@@ -479,14 +494,37 @@ export function create_position_palettes(track: tracker, statics_: statics){
 }
 
 export function create_general_sequences(track: tracker, statics_: statics){
-    remove("sequence", track.curr_sequence)
-    Cmd("Store sequence "+track.curr_sequence+" label POS_ENGINE_FLYOUT /nc")
+    DataPool()[6].Remove(track.curr_sequence)
+    DataPool()[6].Create(track.curr_sequence)
+    DataPool()[6][track.curr_sequence-1].name = "POS_ENGINE_FLYOUT"
     statics_.sequences["flyout"] = track.curr_sequence
     track.increment_sequence()
-    remove("sequence", track.curr_sequence)
-    Cmd("Store sequence "+track.curr_sequence+" label POS_ENGINE_MOVEMENT /nc")
+    DataPool()[6].Remove(track.curr_sequence)
+    DataPool()[6].Create(track.curr_sequence)
+    DataPool()[6][track.curr_sequence-1].name = "POS_ENGINE_MOVEMENT"
     statics_.sequences["movement"] = track.curr_sequence
     track.increment_sequence()
+}
+
+export function create_general_macros(track: tracker, statics_: statics){
+    Object.keys(statics_.sequences).forEach(e =>{
+        DataPool()[8].Remove(track.curr_macro)
+        let macro = DataPool()[8].Create(track.curr_macro)
+        macro.CommandStore()
+        macro.Children()[0].command = "Set sequence "+statics_.sequences[e]+" property 'Speedmaster' 'BPM'"
+        macro.CommandStore()
+        macro.Children()[1].command = "Set sequence "+statics_.sequences[e]+" property 'Ratemaster' 'BPM'"
+        macro.name = "POS_ENGINE_"+e+"_BPM"
+        track.increment_macro();
+        DataPool()[8].Remove(track.curr_macro)
+        macro = DataPool()[8].Create(track.curr_macro)
+        macro.CommandStore()
+        macro.Children()[0].command = "Set sequence "+statics_.sequences[e]+" property 'Speedmaster' 'Speed1'"
+        macro.name = "POS_ENGINE_"+e+"_SPEED"
+        macro.CommandStore()
+        macro.Children()[1].command = "Set sequence "+statics_.sequences[e]+" property 'Ratemaster' 'Speed1'"
+        track.increment_macro();
+    })
 }
 
 
@@ -521,4 +559,16 @@ function create_toggle_command(current_no: number, input_list: number[]){//Creat
     command.push(current_no)
     return "call plugin 1 switch_" + command.join("|")
 
+}
+
+export function remove_plugin(){
+    let statics_ = new statics();
+    statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS"));
+    Object.values(statics_.appearances).forEach(e => {
+        if (e){
+            Cmd("delete appearance "+e+" /nc")
+            Printf("Remove "+e)
+        }
+    })    
+    DelVar(UserVars(), "POS_ENGINE_STATICS")
 }

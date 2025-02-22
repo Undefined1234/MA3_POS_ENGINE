@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser} from "./Layoutmaker"
+import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -51,7 +51,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                     commands: [
                         {value: 0, name: "Cancel"},
                         {value: 1, name: "Update"},
-                        {value: 2, name: "Phasers"}
+                        {value: 2, name: "Phasers"},
+                        {value: 3, name: "Uninstall"}
                     ],
                     inputs: [
                         {name: "Group 1 Linear", value: "1", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
@@ -67,17 +68,12 @@ function main(this: void, displayHandle: Display, argument: string) {
                 let prefix = "POS_ENGINE_ENGINE_"
                 let engines: engine[] = []
                 
-                for (let i = 1; i < 3; i++){
-                    let varname = prefix + i;
-                    let varcontent = GetVar(UserVars(), varname);
-                    if (varcontent == undefined){
-                        log.info("Main(): Engine" + i + " was not found, new engine will be initialized")
-                        engines.push(new engine(i))
-                    } else {
-                        let engine_ = new engine(i);
-                        engine_.fromstring(varcontent)
-                        engines.push(engine_)
-                    }
+                let i = 1;
+                while(GetVar(UserVars(), prefix+i) != undefined){
+                    let engine_ = new engine(i);
+                    engine_.fromstring(GetVar(UserVars(), prefix+i))
+                    engines.push(engine_)
+                    i = i+1
                 }
 
                 log.trace("main(): Assigning groups to engines")
@@ -147,36 +143,72 @@ function main(this: void, displayHandle: Display, argument: string) {
                         }
 
                     }
+                    case(3): {//TODO: create full uninstall procedure 
+                        remove_plugin();
+                        DelVar(UserVars(), "POS_ENGINE_INSTALLED")
+                        
+                        break
+                    }
                 }
 
                 break  
             }
         }
     }else{
-        log.trace("main(): Starting installation");
-        log.trace("main(): Clearing programmer");
-        clearprogrammer();
-        log.trace("main(): Install images");
-        ImageLibraryInstaller(log).onInstall();
-        log.trace("main(): prepeare objects");
 
-        let track = new tracker(100, 100, 100, 100, 100, 100); //TODO make start point dynamic 
-        let statics_ = new statics();
+        let selectors: MessageBoxSelectorOptions[] = [
+            {name: "Speed",selectedValue: 0,values: {"Speed1": 0,"Speed2": 1}},
+            {name: "NO_Engines",selectedValue: 0,values: {"1": 0,"2": 1}},
+        ]
 
-        log.trace("main(): Creating appearances");
-        statics_.create_appearances(track);
+        let options = {
+            title: "Setup",
+            display: 1,
+            commands: [
+                {value: 0, name: "Cancel"},
+                {value: 1, name: "Install"},
+            ],
+            selectors: selectors,
+            inputs: [
+                {name: "Start_address", value:"100", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"}
+            ]
+        }
+        let input = MessageBox(options)
 
-        log.trace("main(): Creating poalettes");
-        create_position_palettes(track, statics_);
-        create_general_sequences(track, statics_);
-        // Creating standard phasers
-        SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1,"phaser1").tostring())
-        SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2, "phaser2").tostring())
-        // Setting some vars
-        SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
-        SetVar(UserVars(),"POS_ENGINE_STATICS", statics_.tostring());
-        SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
-        log.trace("main(): Engines prepared and ready for initialization")
+        if (input.result == 1){
+            log.trace("main(): Starting installation");
+            log.trace("main(): Clearing programmer");
+            clearprogrammer();
+            log.trace("main(): Install images");
+            ImageLibraryInstaller(log).onInstall();
+            log.trace("main(): prepeare objects");
+
+            let start_adress = parseFloat(input.inputs['Start_address'])
+            let track = new tracker(start_adress, start_adress, start_adress, start_adress, start_adress, start_adress);  
+            let statics_ = new statics();
+
+            log.trace("main(): Creating appearances");
+            statics_.create_appearances(track);
+
+            log.trace("main(): Creating poalettes");
+            create_position_palettes(track, statics_);
+            create_general_sequences(track, statics_);
+            create_general_macros(track, statics_)
+            // Creating standard phasers
+            SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1,"phaser1").tostring())
+            SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2, "phaser2").tostring())
+            // Creating Engines
+            let i_max = input.selectors['NO_Engines']
+            for (let i=0; i<i_max+1; i++){
+                log.trace("Main(): Creating engine")
+                SetVar(UserVars(), "POS_ENGINE_ENGINE_"+tostring((i+1)), new engine(i+1).tostring())
+            }
+            // Setting some vars
+            SetVar(UserVars(), "POS_ENGINE_TRACKER", track.tostring());
+            SetVar(UserVars(),"POS_ENGINE_STATICS", statics_.tostring());
+            SetVar(UserVars(), "POS_ENGINE_INSTALLED", true)
+            log.trace("main(): Engines prepared and ready for initialization")
+        }
     }
 }
 

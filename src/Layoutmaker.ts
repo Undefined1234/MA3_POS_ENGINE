@@ -249,7 +249,7 @@ export class phaser {
         step2_transistion_pt: 100,
         step1_width_d: 30,
         step2_width_d: 100,
-        step1_transistion_d: 100,
+        step1_transistion_d: 0,
         step2_transistion_d: 100,
     }
     constructor(phaser_no?: number, name?:string) {
@@ -268,14 +268,14 @@ export class phaser {
                 Cmd("attribute dimmer at 100")
                 Cmd("Integrate preset 2."+inputs.palette_2)
                 Cmd("step 1")
-                Cmd("attribute pan + tilt at transition "+this.props.step1_transistion_pt)
+                Cmd("attribute pan + tilt at transition percent "+this.props.step1_transistion_pt)
                 Cmd("attribute pan + tilt at width percent "+this.props.step1_width_pt)
-                Cmd("attribute dimmer at transition "+this.props.step1_transistion_d)
+                Cmd("attribute dimmer at transition percent "+this.props.step1_transistion_d)
                 Cmd("attribute dimmer at width percent "+this.props.step1_width_d)
                 Cmd("step 2")
-                Cmd("attribute pan + tilt at transition "+this.props.step2_transistion_pt)
+                Cmd("attribute pan + tilt at transition percent "+this.props.step2_transistion_pt)
                 Cmd("attribute pan + tilt at width percent "+this.props.step2_width_pt)
-                Cmd("attribute dimmer at transition "+this.props.step2_transistion_d)
+                Cmd("attribute dimmer at transition percent "+this.props.step2_transistion_d)
                 Cmd("attribute dimmer at width percent "+this.props.step2_width_d)
                 Cmd("Store preset 21."+inputs.store_no+" /o /nc")
                 clearprogrammer()

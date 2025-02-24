@@ -243,14 +243,14 @@ export class phaser {
     phaser_no?: number; 
     effect: string = "flyout";
     props: {[key: string]: number} = {
-        step1_width_pt: 160,
-        step2_width_pt: 160,
-        step1_transistion_pt: 20,
-        step2_transistion_pt: 20,
-        step1_width_d: 160,
-        step2_width_d: 160,
-        step1_transistion_d: 20,
-        step2_transistion_d: 20,
+        step1_width_pt: 30,
+        step2_width_pt: 100,
+        step1_transistion_pt: 100,
+        step2_transistion_pt: 100,
+        step1_width_d: 30,
+        step2_width_d: 100,
+        step1_transistion_d: 100,
+        step2_transistion_d: 100,
     }
     constructor(phaser_no?: number, name?:string) {
         this.phaser_no = phaser_no;

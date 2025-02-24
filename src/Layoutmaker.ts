@@ -277,6 +277,7 @@ export class phaser {
                 Cmd("attribute pan + tilt at width percent "+this.props.step2_width_pt)
                 Cmd("attribute dimmer at transition "+this.props.step2_transistion_d)
                 Cmd("attribute dimmer at width percent "+this.props.step2_width_d)
+                Cmd("Store preset 21."+inputs.store_no+" /o /nc")
                 clearprogrammer()
                 break
             }
@@ -494,13 +495,13 @@ export function create_position_palettes(track: tracker, statics_: statics){
 }
 
 export function create_general_sequences(track: tracker, statics_: statics){
-    DataPool()[6].Remove(track.curr_sequence)
-    DataPool()[6].Create(track.curr_sequence)
+    DataPool()[6].Delete(track.curr_sequence)
+    DataPool()[6].Create(track.curr_sequence).Aquire().no = 1
     DataPool()[6][track.curr_sequence-1].name = "POS_ENGINE_FLYOUT"
     statics_.sequences["flyout"] = track.curr_sequence
     track.increment_sequence()
-    DataPool()[6].Remove(track.curr_sequence)
-    DataPool()[6].Create(track.curr_sequence)
+    DataPool()[6].Delete(track.curr_sequence)
+    DataPool()[6].Create(track.curr_sequence).Aquire().no = 1
     DataPool()[6][track.curr_sequence-1].name = "POS_ENGINE_MOVEMENT"
     statics_.sequences["movement"] = track.curr_sequence
     track.increment_sequence()
@@ -508,7 +509,7 @@ export function create_general_sequences(track: tracker, statics_: statics){
 
 export function create_general_macros(track: tracker, statics_: statics){
     Object.keys(statics_.sequences).forEach(e =>{
-        DataPool()[8].Remove(track.curr_macro)
+        DataPool()[8].Delete(track.curr_macro)
         let macro = DataPool()[8].Create(track.curr_macro)
         macro.CommandStore()
         macro.Children()[0].command = "Set sequence "+statics_.sequences[e]+" property 'Speedmaster' 'BPM'"
@@ -516,7 +517,7 @@ export function create_general_macros(track: tracker, statics_: statics){
         macro.Children()[1].command = "Set sequence "+statics_.sequences[e]+" property 'Ratemaster' 'BPM'"
         macro.name = "POS_ENGINE_"+e+"_BPM"
         track.increment_macro();
-        DataPool()[8].Remove(track.curr_macro)
+        DataPool()[8].Delete(track.curr_macro)
         macro = DataPool()[8].Create(track.curr_macro)
         macro.CommandStore()
         macro.Children()[0].command = "Set sequence "+statics_.sequences[e]+" property 'Speedmaster' 'Speed1'"
@@ -566,8 +567,7 @@ export function remove_plugin(){
     statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS"));
     Object.values(statics_.appearances).forEach(e => {
         if (e){
-            Cmd("delete appearance "+e+" /nc")
-            Printf("Remove "+e)
+            ShowData().Appearances.Delete(e)
         }
     })    
     DelVar(UserVars(), "POS_ENGINE_STATICS")

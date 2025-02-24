@@ -121,6 +121,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                         let result2 = MessageBox(options)
                         switch (result2.result){
                             case(0): {
+                                StopProgress
+                                return
                                 break
                             }
                             default: {
@@ -138,6 +140,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                                     inputs: inputs
                                 }
                                 let result3 = MessageBox(options)
+                                return
                                 break
                             }
                         }
@@ -146,7 +149,6 @@ function main(this: void, displayHandle: Display, argument: string) {
                     case(3): {//TODO: create full uninstall procedure 
                         remove_plugin();
                         DelVar(UserVars(), "POS_ENGINE_INSTALLED")
-                        
                         break
                     }
                 }

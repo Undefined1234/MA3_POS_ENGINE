@@ -129,11 +129,11 @@ function main(this: void, displayHandle: Display, argument: string) {
                                 let selectedphaser = phaserlist[result2.result - 1]
                                 let effect: string = selectedphaser.effect; //type of phaser
                                 let values: {[key: string]: number} = {
-                                    "Flyout": 0,
-                                    "Updown": 1
+                                    "flyout": 0,
+                                    "updown": 1
                                 }
                                 let selectors: MessageBoxSelectorOptions[] = [
-                                    {name: "Effect type",selectedValue: values[effect], values: values},
+                                    {name: "Effect type", selectedValue: values[effect], values: values},
                                 ]
                                 let inputs: {name:string, value:string}[] = [] //value inputs for phaser
                                 Object.keys(selectedphaser.props).forEach(e =>{
@@ -145,6 +145,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                                         {value: 0, name: "Cancel"},
                                         {value: 1, name: "Update"},
                                     ],
+                                    selectors: selectors,
                                     inputs: inputs
                                 }
                                 let result3 = MessageBox(options)
@@ -153,11 +154,12 @@ function main(this: void, displayHandle: Display, argument: string) {
                                         return
                                     }
                                     case(1): {
-                                        selectedphaser.effect = (Object.keys(values).find(key => values[key] === result3.selectors['Effect type']) || "Updown") as effect
+                                        selectedphaser.effect = (Object.keys(values).find(key => values[key] === result3.selectors['Effect type']) || "updown") as effect
                                         Object.keys(result3.inputs).forEach((e) => {
                                             selectedphaser.props[e] = parseFloat(result3.inputs[e])
                                         })
                                         SetVar(UserVars(), "POS_ENGINE_PHASER_"+selectedphaser.phaser_no, selectedphaser.tostring())
+                                        return
                                     }
                                 }
                                 return
@@ -218,7 +220,7 @@ function main(this: void, displayHandle: Display, argument: string) {
             create_general_macros(track, statics_)
             // Creating standard phasers
             SetVar(UserVars(), "POS_ENGINE_PHASER_1", new phaser(1,"phaser1").tostring())
-            SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2, "phaser2").tostring())
+            SetVar(UserVars(), "POS_ENGINE_PHASER_2", new phaser(2, "phaser2", "updown").tostring())
             // Creating Engines
             let i_max = input.selectors['NO_Engines']
             for (let i=0; i<i_max+1; i++){

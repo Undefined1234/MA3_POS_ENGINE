@@ -182,6 +182,7 @@ export class engine {
             Cmd("Assign preset 2." + pos_no + " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
+            DataPool()[6][track.curr_sequence-1].offWhenOverridden = false;
             i = i+1
             Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
 
@@ -242,7 +243,7 @@ export type effect = |"flyout"|"updown"
 
 export class phaser {
     phaser_name?: string;
-    phaser_no?: number; 
+    phaser_no: number; 
     effect: effect = "flyout";
     props: {[key: string]: number} = {
         step1_width_pt: 30,
@@ -254,9 +255,10 @@ export class phaser {
         step1_transistion_d: 0,
         step2_transistion_d: 100,
     }
-    constructor(phaser_no?: number, name?:string) {
-        this.phaser_no = phaser_no;
-        this.phaser_name = name
+    constructor(phaser_no?: number, name?:string, effect?:effect) {
+        this.phaser_no = phaser_no || -1;
+        this.phaser_name = name;
+        this.effect = effect || "flyout" as effect;
     }
 
     create_phaser(inputs: phaser_creation): boolean{
@@ -289,6 +291,12 @@ export class phaser {
                 Cmd("Integrate preset 2."+inputs.palette_1)
                 Cmd("Next Step")
                 Cmd("Integrate preset 2."+inputs.palette_2)
+                Cmd("step 1")
+                Cmd("attribute pan + tilt at transition percent "+this.props.step1_transistion_pt)
+                Cmd("attribute pan + tilt at width percent "+this.props.step1_width_pt)
+                Cmd("step 2")
+                Cmd("attribute pan + tilt at transition percent "+this.props.step2_transistion_pt)
+                Cmd("attribute pan + tilt at width percent "+this.props.step2_width_pt)
                 Cmd("Store preset 21."+inputs.store_no+" /o /nc")
                 clearprogrammer()
                 break
@@ -299,15 +307,18 @@ export class phaser {
 
     fromstring(input: string) {
         let result = input.split("|")
-        this.phaser_name = result[0]
-        let proplist = result[1].split(',')
+        this.phaser_no = parseFloat(result[0])
+        this.phaser_name = result[1]
+        let proplist = result[2].split(',')
         Object.values(this.props).map(function(e, i) {
             return e = parseFloat(proplist[i])
         })
-        this.effect = result[2] as effect;
+        this.effect = result[3] as effect;
     }
     tostring(): string {
         let result: string[] = []
+        result.push(tostring(this.phaser_no))
+        result.push("|")
         result.push(this.phaser_name || "noname")
         result.push("|")
         Object.values(this.props).forEach((e) => {
@@ -316,7 +327,7 @@ export class phaser {
         })
         result.pop()
         result.push("|"+this.effect)
-        return result.join()
+        return result.join("")
     }
 }
 
@@ -554,13 +565,14 @@ export function parse_phasers(): Array<phaser>{// will find phaser effects that 
 //Other functions 
 function create_toggle_command(current_no: number, input_list: number[]){//Creates command for switch plugin
     let command = []
+    let pluginname = "\"" +PLUGIN_ENV.pluginName+" v"+PLUGIN_ENV.pluginVersion.replaceAll(".", "_") + "\""
     input_list.forEach((e) =>{ //Creating command where active item is on the last
         if (e != current_no){
             command.push(e)
         }
     })
     command.push(current_no)
-    return "call plugin 1 switch_" + command.join("|")
+    return "call plugin "+ pluginname +" switch_" + command.join("|")
 
 }
 

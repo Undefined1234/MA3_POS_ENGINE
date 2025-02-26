@@ -238,10 +238,12 @@ declare interface phaser_creation {
     store_no: number; //Must be the relative adress of the All1 datapool 
 }
 
+export type effect = |"flyout"|"updown"
+
 export class phaser {
     phaser_name?: string;
     phaser_no?: number; 
-    effect: string = "flyout";
+    effect: effect = "flyout";
     props: {[key: string]: number} = {
         step1_width_pt: 30,
         step2_width_pt: 100,
@@ -302,7 +304,7 @@ export class phaser {
         Object.values(this.props).map(function(e, i) {
             return e = parseFloat(proplist[i])
         })
-        this.effect = result[2]
+        this.effect = result[2] as effect;
     }
     tostring(): string {
         let result: string[] = []

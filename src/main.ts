@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin} from "./Layoutmaker"
+import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -118,7 +118,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                         phaserlist.forEach((e,i) => {
                             options.commands.push({value:i+1, name: "Phaser:"+tostring(i+1)})
                         })
-                        let result2 = MessageBox(options)
+                        let result2 = MessageBox(options) //Phaser edits
                         switch (result2.result){
                             case(0): {
                                 StopProgress
@@ -127,7 +127,15 @@ function main(this: void, displayHandle: Display, argument: string) {
                             }
                             default: {
                                 let selectedphaser = phaserlist[result2.result - 1]
-                                let inputs: {name:string, value:string}[] = []
+                                let effect: string = selectedphaser.effect; //type of phaser
+                                let values: {[key: string]: number} = {
+                                    "Flyout": 0,
+                                    "Updown": 1
+                                }
+                                let selectors: MessageBoxSelectorOptions[] = [
+                                    {name: "Effect type",selectedValue: values[effect], values: values},
+                                ]
+                                let inputs: {name:string, value:string}[] = [] //value inputs for phaser
                                 Object.keys(selectedphaser.props).forEach(e =>{
                                     inputs.push({name:e, value: tostring(selectedphaser.props[e])})
                                 })
@@ -140,6 +148,18 @@ function main(this: void, displayHandle: Display, argument: string) {
                                     inputs: inputs
                                 }
                                 let result3 = MessageBox(options)
+                                switch (result3.result){
+                                    case(0): {
+                                        return
+                                    }
+                                    case(1): {
+                                        selectedphaser.effect = (Object.keys(values).find(key => values[key] === result3.selectors['Effect type']) || "Updown") as effect
+                                        Object.keys(result3.inputs).forEach((e) => {
+                                            selectedphaser.props[e] = parseFloat(result3.inputs[e])
+                                        })
+                                        SetVar(UserVars(), "POS_ENGINE_PHASER_"+selectedphaser.phaser_no, selectedphaser.tostring())
+                                    }
+                                }
                                 return
                                 break
                             }

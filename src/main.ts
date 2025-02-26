@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect} from "./Layoutmaker"
+import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -135,9 +135,9 @@ function main(this: void, displayHandle: Display, argument: string) {
                                 let selectors: MessageBoxSelectorOptions[] = [
                                     {name: "Effect type", selectedValue: values[effect], values: values},
                                 ]
-                                let inputs: {name:string, value:string}[] = [] //value inputs for phaser
+                                let inputs: MessageBoxInputOptions[] = [] //value inputs for phaser
                                 Object.keys(selectedphaser.props).forEach(e =>{
-                                    inputs.push({name:e, value: tostring(selectedphaser.props[e])})
+                                    inputs.push({name:e, value: tostring(selectedphaser.props[e]), whiteFilter: "0123456789", vkPlugin: 'NumericInput', maxTextLength: 3})
                                 })
                                 let options = {
                                     title: "Phaser",
@@ -200,6 +200,7 @@ function main(this: void, displayHandle: Display, argument: string) {
         let input = MessageBox(options)
 
         if (input.result == 1){
+            onInstall();
             log.trace("main(): Starting installation");
             log.trace("main(): Clearing programmer");
             clearprogrammer();

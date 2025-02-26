@@ -53,7 +53,16 @@ export class item {
     }
 }
 
+/**
+ * Engine class
+ * @var {engine_num} Engine number
+ * @var {positions} Positions Array<number> containing the MA-indexed sequence numbers of each position of the engine
+ * @var {positions2} Positions Array<number> containing the MA-indexed sequence numbers of the second sequences containing macros to assign palettes for the phasers 
+ * @var {palette_pos} list with size of two containing the MA-indexed numbers of the palettes that are being used for the phaser effects 
+ * @var {matricks} list with MA-indexed numbers for the matricks for respectively the: positions (0), phasers (1), movements (2)
+ */
 export class engine {
+
     engine_num: number = -1; //Engine number
     positions: Array<number> = []; //Positions for physical adjustment
     positions2: Array<number> = []; //Positions for step 2 of template presets
@@ -75,7 +84,10 @@ export class engine {
     constructor(engine_num: number){
         this.engine_num = engine_num
     }
-
+    /**
+     * Tostring function converts all parameters in this class into a storable string
+     * @returns string
+     */
     tostring() {
         let result = [];
         result.push(this.engine_num); //index 0
@@ -183,6 +195,7 @@ export class engine {
             Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
             DataPool()[6][track.curr_sequence-1].offWhenOverridden = false;
+            DataPool()[6][track.curr_sequence-1][2][0].Children()[0].matricks = DataPool()[10][this.matricks[0]-1]
             i = i+1
             Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
 
@@ -310,8 +323,8 @@ export class phaser {
         this.phaser_no = parseFloat(result[0])
         this.phaser_name = result[1]
         let proplist = result[2].split(',')
-        Object.values(this.props).map(function(e, i) {
-            return e = parseFloat(proplist[i])
+        Object.keys(this.props).forEach((e, i) => {
+            this.props[e] = parseFloat(proplist[i])
         })
         this.effect = result[3] as effect;
     }
@@ -499,6 +512,12 @@ return -1
 export function create_position_palettes(track: tracker, statics_: statics){
     statics_.set_position_start(track.curr_pos)
     Object.values(statics_.position_types).forEach(p => {
+        try {
+            DataPool()[4][2].Delete(DataPool()[4][2].Get(p).index)
+        } catch (error) {
+            
+        }
+            
 
         Cmd("Store preset 2."+track.curr_pos+" /nc");
         Cmd("Label preset 2."+track.curr_pos+" "+ p +" /nc");
@@ -585,4 +604,14 @@ export function remove_plugin(){
         }
     })    
     DelVar(UserVars(), "POS_ENGINE_STATICS")
+
+    let pluginname = PLUGIN_ENV.pluginName+" v"+PLUGIN_ENV.pluginVersion.replaceAll(".", "_")
+    let plugin = DataPool()[7].Get(pluginname)
+    plugin.lock = false;
+}
+
+export function onInstall(){
+    let pluginname = PLUGIN_ENV.pluginName+" v"+PLUGIN_ENV.pluginVersion.replaceAll(".", "_")
+    let plugin = DataPool()[7].Get(pluginname)
+    plugin.lock = true;
 }

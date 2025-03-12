@@ -1,6 +1,6 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
+import {create_layout, clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
 import { command } from "ftp"
 
 let engines: Array<engine> = [];
@@ -52,7 +52,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                         {value: 0, name: "Cancel"},
                         {value: 1, name: "Update"},
                         {value: 2, name: "Phasers"},
-                        {value: 3, name: "Uninstall"}
+                        {value: 3, name: "Uninstall"},
+                        {value: 4, name: "Create Layout"}
                     ],
                     inputs: [
                         {name: "Group 1 Linear", value: "1", vkPlugin:'NumericInput' as 'NumericInput', whiteFilter:"1234567890"},
@@ -171,6 +172,10 @@ function main(this: void, displayHandle: Display, argument: string) {
                     case(3): {//TODO: create full uninstall procedure 
                         remove_plugin();
                         DelVar(UserVars(), "POS_ENGINE_INSTALLED")
+                        break
+                    }
+                    case(4): {
+                        create_layout()
                         break
                     }
                 }

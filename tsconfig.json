@@ -4,7 +4,7 @@
   "tstl": {
     "luaTarget": "5.3",
     "luaBundleEntry": "./src/main.ts",
-    "luaBundle": "C:/Users/20212059/Documents/GitHub/ma3-ts-plugin-template/dist/8Events - POS_ENGINE_PLUGIN - v0.1.0/grandMA3/gma3_library/datapools/plugins/8Events/POS_ENGINE_PLUGIN - v0.1.0/MA3 1.8/main.lua",
+    "luaBundle": "C:/Users/const/Documents/GitHub/MA3_POS_ENGINE/dist/8Events - POS_ENGINE_PLUGIN - v0.1.0/grandMA3/gma3_library/datapools/plugins/8Events/POS_ENGINE_PLUGIN - v0.1.0/MA3 1.8/main.lua",
     "luaPlugins": [
       { "name": "./tstl/grandMA3-tstl-plugin.js" }
     ],

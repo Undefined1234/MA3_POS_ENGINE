@@ -2,54 +2,87 @@ import { isInteger } from "@ma3-pro-plugins/ma3-pro-plugins-lib";
 import { PLUGIN_ENV } from "./__env"
 
 export class layout {
-    items!: Array<item>;
-    curr_row: Number;
-    curr_col: Number;
-    layout_num: Number; 
+    items: Array<item> = [];
+    curr_row: number;
+    curr_col: number;
+    layout_num: number; 
 
-    constructor(layout_num: Number) {
+    constructor(layout_num: number) {
         this.curr_col = 1;
         this.curr_row = 1;
         this.layout_num = layout_num;
     }
 
-    additem(type: string, id: Number, engine: engine){
-        const item_ = new item(type, id, this.curr_col, this.curr_row, engine)
+    additem(type: string, id: number){
+        let item_ = new item(type, id, this.curr_col, this.curr_row)
         this.items.push(item_);
     }
 
     addrow(){
-        this.curr_col =+ 1;
+        this.curr_col = 1;
+        this.curr_row = this.curr_row + 1;
     }
     addcol(){
-        this.curr_col =+ 1;
+        this.curr_col = this.curr_col + 1;
     }
 
+    /**
+     * parse_engines
+     * Needs an array containing all phasers. The engine will store each item for each phaser and assign a specific coordinate to each item that needs 
+     * to be shown in the layout view. 
+     * 
+     * @var {input} is an array containing engines
+     */
+    parse_engines(input: Array<engine>){
+        input.forEach((e) => {
+            e.positions.forEach((pos) => {
+                this.additem('sequence', pos)
+                this.addcol()
+            })
+            this.addrow()
+            e.positions2.forEach((pos) => {
+                this.additem('sequence', pos)
+                this.addcol()
+            })
+        })
+    }
+
+    /**
+     * creategrid
+     * Takes the item array and starts plotting.
+     */
     creategrid(){
-        this.items.forEach( (item) => {
-            
+        DataPool()[13].Delete(this.layout_num)
+        Printf("Deleted layout")
+        let layout = DataPool()[13].Create(this.layout_num)
+        Printf("Aantal items "+this.items.length)
+        this.items.forEach( (item, index) => {
+            layout.Append()
+            let itemobj = layout.Children().slice(-1)[0]
+            itemobj.posY = item.row*item.width
+            itemobj.posX = item.col*item.height
+            itemobj.width = item.width
+            itemobj.height = item.height
         });
     }
 }
 
 export class item {
     type: string;
-    id: Number;
-    col: Number;
-    row: Number;
-    width: Number;
-    height: Number;
-    engine: engine;
+    id: number;
+    col: number;
+    row: number;
+    width: number;
+    height: number;
 
 
-    constructor(type: string, id: Number, col: Number,  row: Number, engine: engine, width = 20, height = 20) {
+    constructor(type: string, id: number, col: number,  row: number,  width = 20, height = 20) {
         this.type = type;
         this.id = id;
         this.col = col;
         this.row = row;
         this.width = width;
         this.height = height;
-        this.engine = engine;
     }
 }
 
@@ -124,26 +157,26 @@ export class engine {
             return -1
         }
         let input_split = input.split("|");
-        let engine_ = new engine(parseFloat(input_split[0]));
-        engine_.positions = input_split[1].split(",").map(function(item){
+        this.engine_num = parseFloat(input_split[0]);
+        this.positions = input_split[1].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
-        engine_.positions2 = input_split[2].split(",").map(function(item){
+        this.positions2 = input_split[2].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
-        engine_.palette_pos = input_split[3].split(",").map(function(item){
+        this.palette_pos = input_split[3].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
-        engine_.matricks = input_split[4].split(",").map(function(item){
+        this.matricks = input_split[4].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
-        engine_.phasers = input_split[5].split(",").map(function(item){
+        this.phasers = input_split[5].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
 
-        engine_.group_linear = parseFloat(input_split[6])
-        engine_.group_grid = parseFloat(input_split[7])
-        engine_.installed = parseFloat(input_split[8])
+        this.group_linear = parseFloat(input_split[6])
+        this.group_grid = parseFloat(input_split[7])
+        this.installed = parseFloat(input_split[8])
 
 
     }
@@ -240,6 +273,7 @@ export class engine {
         })
 
         this.installed = 1;
+        SetVar(UserVars(), "POS_ENGINE_ENGINE_"+this.engine_num, this.tostring())
     }
 
 }
@@ -407,10 +441,11 @@ export function trackerfromstring(string: string | undefined){
 
 export class statics { // Class containing static content for this plugin //TODO: add remote control for OnStartup sequence 
     positions: number[] = [-1,-1]; //Begin and end number of positions in position palette 
-    sequences: {[key: string]: number} = {
+    sequences: {[key: string]: number} = { //MA3 ID of sequence containing flyout and movement control
         "flyout": -1,
         "movement": -1,
     };
+    
     appearances: {[key: string]: number|undefined} = {}; // key = position + on off indicator, value = position on appearances palette 
     position_types: {[key: number]: string} = {
         0: "LOWFRONT",
@@ -562,9 +597,26 @@ export function create_general_macros(track: tracker, statics_: statics){
 
 
 //GET functions
-export function parse_engines(){ // will find engines in variable list and return array with all engines
-
+export function parse_engines(): Array<engine>{ // will find engines in variable list and return array with all engines
+    let found : Array<engine> = [];
+    let i = 1
+    let condition = true
+    while (condition){
+        let input = GetVar(UserVars(), "POS_ENGINE_ENGINE_"+i)
+        if (input != undefined){
+            let engine_ = new engine(1)
+            engine_.fromstring(input)
+            Printf(engine_.tostring())
+            found.push(engine_)
+            i = i+1
+        }else {condition = false}
+    }
+    if (found.length == 0) {
+        return found
+    }
+    return found
 }
+
 export function parse_phasers(): Array<phaser>{// will find phaser effects that were created and return them as a list of this phaser 
     let found : Array<phaser> = [];
     let i = 1
@@ -579,6 +631,15 @@ export function parse_phasers(): Array<phaser>{// will find phaser effects that 
         }else {condition = false}
     }
     return found
+}
+
+//Layout functions
+export function create_layout() {
+    let engines = parse_engines()
+
+    let layout_ = new layout(100)
+    layout_.parse_engines(engines)
+    layout_.creategrid()
 }
 
 //Other functions 

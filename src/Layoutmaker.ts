@@ -9,18 +9,17 @@ export class layout {
 
     constructor(layout_num: number) {
         this.curr_col = 1;
-        this.curr_row = 1;
+        this.curr_row = -1;
         this.layout_num = layout_num;
     }
 
-    additem(type: string, id: number){
-        let item_ = new item(type, id, this.curr_col, this.curr_row)
-        this.items.push(item_);
+    additem(item: item){
+        this.items.push(item);
     }
 
     addrow(){
         this.curr_col = 1;
-        this.curr_row = this.curr_row + 1;
+        this.curr_row = this.curr_row - 1;
     }
     addcol(){
         this.curr_col = this.curr_col + 1;
@@ -35,13 +34,23 @@ export class layout {
      */
     parse_engines(input: Array<engine>){
         input.forEach((e) => {
+            this.additem(new item(undefined, 1, this.curr_col, this.curr_row,false,80,80, "POS_ENGINE"))
+            this.addcol()
             e.positions.forEach((pos) => {
-                this.additem('sequence', pos)
+                this.additem(new item(DataPool()[6], pos, this.curr_col, this.curr_row, false))
+                this.addcol()
+            })
+            e.phaser_assigns.forEach(e => {
+                this.additem(new item(DataPool()[8], e, this.curr_col, this.curr_row, true))
                 this.addcol()
             })
             this.addrow()
             e.positions2.forEach((pos) => {
-                this.additem('sequence', pos)
+                this.additem(new item(DataPool()[6], pos, this.curr_col, this.curr_row, false))
+                this.addcol()
+            })
+            e.matricks.forEach((pos) => {
+                this.additem(new item(DataPool()[10], pos, this.curr_col, this.curr_row, true))
                 this.addcol()
             })
         })
@@ -59,30 +68,41 @@ export class layout {
         this.items.forEach( (item, index) => {
             layout.Append()
             let itemobj = layout.Children().slice(-1)[0]
+            if (item.type){
+                itemobj.object = item.type.Get(item.id)
+            }
+            if (item.text){
+                itemobj.customTextText = item.text
+            }
             itemobj.posY = item.row*item.width
             itemobj.posX = item.col*item.height
             itemobj.width = item.width
             itemobj.height = item.height
+            itemobj.visibilityObjectName = item.objectname
         });
     }
 }
 
 export class item {
-    type: string;
+    type: Obj<DataPoolClass> | undefined;
     id: number;
     col: number;
     row: number;
     width: number;
     height: number;
+    objectname: boolean;
+    text: string | undefined;
 
 
-    constructor(type: string, id: number, col: number,  row: number,  width = 20, height = 20) {
+    constructor(type: Obj<DataPoolClass> | undefined = undefined, id: number, col: number,  row: number, objectname = false  ,width = 40, height = 40, text: string | undefined = undefined) {
         this.type = type;
         this.id = id;
         this.col = col;
         this.row = row;
         this.width = width;
         this.height = height;
+        this.objectname = objectname;
+        this.text = text;
     }
 }
 
@@ -97,12 +117,12 @@ export class item {
 export class engine {
 
     engine_num: number = -1; //Engine number
-    positions: Array<number> = []; //Positions for physical adjustment
-    positions2: Array<number> = []; //Positions for step 2 of template presets
+    positions: Array<number> = []; //Positions for physical adjustment SEQUENCE
+    positions2: Array<number> = []; //Positions for step 2 of template presets SEQUENCE
     palette_pos: Array<number> = []; //Palettes for step 1 and 2 (respectively) of the phaser effects
-    matricks: Array<number> = [-1, -1, -1] // MAtricks for position, flyouts, movements respectively 
+    matricks: Array<number> = [-1, -1, -1] // MAtricks for position, flyouts, movements respectively MATRICKS
     phasers: Array<number> = []; //Phaser effects in All1 DataPool 
-    phaser_assigns: Array<number> = []; //macros that assign phasers to sequence 
+    phaser_assigns: Array<number> = []; //macros that assign phasers to sequence MACROS
     group_linear: number = -1 ; //Linear group
     group_grid: number = -1; //Grid group
     macros: {[key: string]: number} ={//TODO add to string parser and getter
@@ -130,26 +150,30 @@ export class engine {
         }else{result.push('-1,')}
         result.push("|");
         if (this.positions2.length > 0){
-            this.positions2.forEach((e) => result.push(e+",")) //index 1
-        }else{result.push('-1,')} //index 2
+            this.positions2.forEach((e) => result.push(e+",")) //index 2
+        }else{result.push('-1,')} 
         result.push("|");
         if (this.palette_pos.length > 0){
-            this.palette_pos.forEach((e) => result.push(e+",")) //index 1
-        }else{result.push('-1,')} // index 3
+            this.palette_pos.forEach((e) => result.push(e+",")) //index 3
+        }else{result.push('-1,')} 
         result.push("|");
         if (this.matricks.length > 0){
-            this.matricks.forEach((e) => result.push(e+",")) //index 1
-        }else{result.push('-1,')} // index 4
+            this.matricks.forEach((e) => result.push(e+",")) //index 4
+        }else{result.push('-1,')} 
         result.push("|");
         if (this.phasers.length > 0){
-            this.phasers.forEach((e) => result.push(e+",")) //index 1
-        }else{result.push('-1,')} // index 5
+            this.phasers.forEach((e) => result.push(e+",")) //index 5
+        }else{result.push('-1,')} 
         result.push("|");
-        result.push(this.group_linear) // index 6
+        if (this.phaser_assigns.length > 0){
+            this.phaser_assigns.forEach((e) => result.push(e+",")) //index 6
+        }else{result.push('-1,')} 
         result.push("|");
-        result.push(this.group_grid) // index 7
+        result.push(this.group_linear) // index 7
         result.push("|");
-        result.push(this.installed) // index 8
+        result.push(this.group_grid) // index 8
+        result.push("|");
+        result.push(this.installed) // index 9
         return result.join("")
     }
     fromstring(input: string | undefined) {
@@ -169,14 +193,17 @@ export class engine {
         }).filter(function(x){return x > 0})
         this.matricks = input_split[4].split(",").map(function(item){
             return parseFloat(item)
-        }).filter(function(x){return x > 0})
+        }).filter(function(x){return x > -2})
         this.phasers = input_split[5].split(",").map(function(item){
             return parseFloat(item)
         }).filter(function(x){return x > 0})
+        this.phaser_assigns = input_split[6].split(",").map(function(item){
+            return parseFloat(item)
+        }).filter(function(x){return x > 0})
 
-        this.group_linear = parseFloat(input_split[6])
-        this.group_grid = parseFloat(input_split[7])
-        this.installed = parseFloat(input_split[8])
+        this.group_linear = parseFloat(input_split[7])
+        this.group_grid = parseFloat(input_split[8])
+        this.installed = parseFloat(input_split[9])
 
 
     }
@@ -193,11 +220,14 @@ export class engine {
             Cmd("attribute pan + tilt at 0")
             Cmd("Store preset 2."+track.curr_pos+" /nc");
             Cmd("Label preset 2."+track.curr_pos+" POS_ENGINE_"+this.engine_num+"_PALETTE_"+(i+1)+" /nc");
-            this.palette_pos.push(track.curr_pos);
+            if (!this.installed){
+                this.palette_pos.push(track.curr_pos);
+            }else {this.palette_pos[i] = track.curr_pos}
+            
             track.increment_pos();
         }
 
-        phasers.forEach((e) => { //create phasers for engine
+        phasers.forEach((e, i) => { //create phasers for engine
             let input = {
                 group_no: this.group_grid,
                 engine_no: this.engine_num,
@@ -206,14 +236,16 @@ export class engine {
                 store_no: track.curr_all1
             }
             if(e.create_phaser(input)){
-                this.phasers.push(track.curr_all1);
+                if (!this.installed){
+                    this.phasers.push(track.curr_all1);
+                }else {this.phasers[i] = track.curr_all1}
                 track.increment_all1()
             }
             
         })
         for (let i = 0; i<this.matricks.length; i++){ // create matricks 
             let curr_matrick = track.curr_matricks
-            remove("matricks", curr_matrick)
+            Delete("matricks", curr_matrick)
             Cmd("Store matricks "+curr_matrick+" /nc")
             Cmd("Label matricks "+curr_matrick+" POS_ENGINE_MATRICKS_E" + tostring(this.engine_num))
             this.matricks[i] = curr_matrick
@@ -222,17 +254,20 @@ export class engine {
 
         let i = 0; //Increment parameter for appearances
         for (let pos_no = static_.positions[0]; pos_no < static_.positions[1]; pos_no++){ //Create positions 
-            remove("sequence", track.curr_sequence);
+            Delete("sequence", track.curr_sequence);
             Cmd("Store sequence "+track.curr_sequence+" /nc")
             Cmd("Assign preset 2." + pos_no + " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
             DataPool()[6][track.curr_sequence-1].offWhenOverridden = false;
             DataPool()[6][track.curr_sequence-1][2][0].Children()[0].matricks = DataPool()[10][this.matricks[0]-1]
-            i = i+1
+            
             Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
 
-            this.positions.push(track.curr_sequence)
+            if (!this.installed){
+                this.positions.push(track.curr_sequence)
+            }else{this.positions[i] = track.curr_sequence}
+            i = i+1
             track.increment_sequence();
         }
         this.positions.forEach((pos_no, i) => {//creating toggle appearances 
@@ -242,13 +277,17 @@ export class engine {
 
         i = 0; //Increment parameter for appearances
         for (let pos_no = static_.positions[0]; pos_no < static_.positions[1]; pos_no++){ //Create positions 2 for second palette
-            remove("sequence", track.curr_sequence);
+            Delete("sequence", track.curr_sequence);
             Cmd("Store sequence "+track.curr_sequence+" /nc")
             Cmd("Assign group "+this.group_linear+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
             Cmd("Assign appearance "+ static_.position_types[i]+"I"+" at sequence " + track.curr_sequence)
-            i = i+1
+            
             Cmd("Assign matricks "+this.matricks[0]+ " at sequence " + track.curr_sequence + " cue 1 part 0.1")
-            this.positions2.push(track.curr_sequence)
+
+            if (!this.installed){
+                this.positions2.push(track.curr_sequence)
+            }else {this.positions2[i] = track.curr_sequence}
+            i = i+1
             track.increment_sequence();
         }
         this.positions2.forEach((pos_no, i) => {//creating toggle appearances 
@@ -263,12 +302,16 @@ export class engine {
 
         DataPool()[6][static_.sequences["flyout"]-1][2][0].Children()[this.engine_num-1].selection = DataPool()[5].Get(this.group_grid)
         this.phasers.forEach((e, i) => { //Creating macros for position dependend phaser effects 
-            DataPool()[8].Remove(track.curr_macro)
+            DataPool()[8].Delete(track.curr_macro)
             let macro = DataPool()[8].Create(track.curr_macro)
             let preset = DataPool()[4][21].Get(e)
             macro.name = "POS_ENGINE_"+this.engine_num+"_SET_"+phasers[i].phaser_name
             macro.CommandStore()
             macro.Children()[0].command = "Assign preset 21."+preset.index+" at sequence "+static_.sequences["flyout"]+" cue 1 part 0."+this.engine_num
+            if (!this.installed){
+                this.phaser_assigns.push(track.curr_macro)
+            }else{this.phaser_assigns[i] = track.curr_macro}
+            
             track.inrement_macro()
         })
 
@@ -286,7 +329,7 @@ declare interface phaser_creation {
     store_no: number; //Must be the relative adress of the All1 datapool 
 }
 
-export type effect = |"flyout"|"updown"
+export type effect = |"flyout"|"updown"|"flyoutsoft"
 
 export class phaser {
     phaser_name?: string;
@@ -329,6 +372,10 @@ export class phaser {
                 Cmd("attribute dimmer at transition percent "+this.props.step2_transistion_d)
                 Cmd("attribute dimmer at width percent "+this.props.step2_width_d)
                 Cmd("Store preset 21."+inputs.store_no+" /o /nc")
+                clearprogrammer()
+                break
+            }
+            case("flyoutsoft"):{
                 clearprogrammer()
                 break
             }
@@ -535,7 +582,7 @@ export class statics { // Class containing static content for this plugin //TODO
 export function clearprogrammer() { //TODO: extend clearprogrammer to really be clear 
     Cmd("clear; clear; clear")
 }
-function remove(type: string, no: number){//Remove an item in the DataPool
+function Delete(type: string, no: number){//Delete an item in the DataPool
     Cmd("Delete "+ type + " " + no + " /nc");
 }
 function new_cue_by_index(sequence_no: number): number{//Creates a new cue at given index

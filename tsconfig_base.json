@@ -4,6 +4,7 @@
     "lib": [
       "esnext"
     ],
+    "resolveJsonModule": true,
     "moduleResolution": "node",
     "types": [
       "lua-types/5.3",

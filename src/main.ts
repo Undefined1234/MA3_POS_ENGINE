@@ -2,6 +2,7 @@ import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
 import {create_layout, clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
 import { command } from "ftp"
+import * as json from "@flying-dice/tslua-rxi-json";
 
 let engines: Array<engine> = [];
 
@@ -86,6 +87,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                             //         engines[index-1].engine_num = parseFloat(input.inputs[e])
                             //     }
                             // });
+
+                            //Testing a function 
                             
                             let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
                             let statics_ = new statics()

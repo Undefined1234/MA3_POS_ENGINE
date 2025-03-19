@@ -29,11 +29,14 @@
   "devDependencies": {
     "@ma3-pro-plugins/ma3-ts-plugin-builder": "^1.2.2",
     "grandma3-ts-types": "^2.0.0",
-    "lua-types": "^2.13.0",
-    "typescript": "^4.8.4",
-    "typescript-to-lua": "^1.10.1"
+    "lua-types": "^2.13.1",
+    "typescript": "^4.9.5",
+    "typescript-to-lua": "^1.12.1"
   },
   "dependencies": {
-    "@ma3-pro-plugins/ma3-pro-plugins-lib": "0.5.1"
+    "@flying-dice/tslua-rxi-json": "^0.32.23",
+    "@ma3-pro-plugins/ma3-pro-plugins-lib": "0.5.1",
+    "@types/lua-json": "^1.0.3",
+    "lua-json": "^1.0.1"
   }
 }

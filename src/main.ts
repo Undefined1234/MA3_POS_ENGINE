@@ -2,7 +2,7 @@ import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
 import {create_layout, clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
 import { command } from "ftp"
-import * as json from "@flying-dice/tslua-rxi-json";
+
 
 let engines: Array<engine> = [];
 
@@ -97,8 +97,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                             }
                             log.trace("main(): Creating engines")
                             engines.forEach((e, i) => {
-                                e.group_linear = parseFloat(input.inputs["Group "+(i+1)+" Linear"])
-                                e.group_grid = parseFloat(input.inputs["Group "+(i+1)+" Grid"])
+                                e.params.group_linear = parseFloat(input.inputs["Group "+(i+1)+" Linear"])
+                                e.params.group_grid = parseFloat(input.inputs["Group "+(i+1)+" Grid"])
                                 e.create_engine(track, statics_, parse_phasers())
                             })
                         break
@@ -107,8 +107,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                         let phaserlist = parse_phasers();
                         let inputs: {name:string, value:string}[] = []
                         phaserlist.forEach(e => {
-                            Object.keys(e.props).forEach(ee => {
-                                inputs.push({name: ee, value: tostring(e.props[ee])})
+                            Object.keys(e.params.props).forEach(ee => {
+                                inputs.push({name: ee, value: tostring(e.params.props[ee])})
                             })
                         });
                         let options = {
@@ -130,7 +130,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                             }
                             default: {
                                 let selectedphaser = phaserlist[result2.result - 1]
-                                let effect: string = selectedphaser.effect; //type of phaser
+                                let effect: string = selectedphaser.params.effect; //type of phaser
                                 let values: {[key: string]: number} = {
                                     "flyout": 0,
                                     "updown": 1
@@ -139,8 +139,8 @@ function main(this: void, displayHandle: Display, argument: string) {
                                     {name: "Effect type", selectedValue: values[effect], values: values},
                                 ]
                                 let inputs: MessageBoxInputOptions[] = [] //value inputs for phaser
-                                Object.keys(selectedphaser.props).forEach(e =>{
-                                    inputs.push({name:e, value: tostring(selectedphaser.props[e]), whiteFilter: "0123456789", vkPlugin: 'NumericInput', maxTextLength: 3})
+                                Object.keys(selectedphaser.params.props).forEach(e =>{
+                                    inputs.push({name:e, value: tostring(selectedphaser.params.props[e]), whiteFilter: "0123456789", vkPlugin: 'NumericInput', maxTextLength: 3})
                                 })
                                 let options = {
                                     title: "Phaser",
@@ -157,11 +157,11 @@ function main(this: void, displayHandle: Display, argument: string) {
                                         return
                                     }
                                     case(1): {
-                                        selectedphaser.effect = (Object.keys(values).find(key => values[key] === result3.selectors['Effect type']) || "updown") as effect
+                                        selectedphaser.params.effect = (Object.keys(values).find(key => values[key] === result3.selectors['Effect type']) || "updown") as effect
                                         Object.keys(result3.inputs).forEach((e) => {
-                                            selectedphaser.props[e] = parseFloat(result3.inputs[e])
+                                            selectedphaser.params.props[e] = parseFloat(result3.inputs[e])
                                         })
-                                        SetVar(UserVars(), "POS_ENGINE_PHASER_"+selectedphaser.phaser_no, selectedphaser.tostring())
+                                        SetVar(UserVars(), "POS_ENGINE_PHASER_"+selectedphaser.params.phaser_no, selectedphaser.tostring())
                                         return
                                     }
                                 }

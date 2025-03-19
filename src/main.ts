@@ -88,7 +88,6 @@ function main(this: void, displayHandle: Display, argument: string) {
                             //     }
                             // });
 
-                            //Testing a function 
                             
                             let track = trackerfromstring(GetVar(UserVars(), "POS_ENGINE_TRACKER"))
                             let statics_ = new statics()

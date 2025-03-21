@@ -1,12 +1,13 @@
 import { Logger, LogLevel} from "@ma3-pro-plugins/ma3-pro-plugins-lib"
 import { ImageLibraryInstaller } from "./ImageLibraryInstaller"
-import {create_layout, clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall} from "./Layoutmaker"
+import {create_layout, clearprogrammer, create_position_palettes, engine, trackerfromstring, item, layout, statics, tracker, create_general_sequences, parse_phasers, phaser, create_general_macros, remove_plugin, effect, onInstall, toggle} from "./Layoutmaker"
 import { command } from "ftp"
 
 
 let engines: Array<engine> = [];
 
 function main(this: void, displayHandle: Display, argument: string) {
+
 
     const log = Logger({ prefix: ["PluginTemplate"], logLevel: LogLevel.TRACE })
     log.trace("main(): Plugin started")
@@ -28,21 +29,7 @@ function main(this: void, displayHandle: Display, argument: string) {
                 break
             }
             case "switch": {
-                let input = argument.split("_")[1]
-                let list = input.split("|").map(function(e){return parseFloat(e)});
-                const active = list.pop()
-                log.trace("switch(): Active sequence " + tostring(active))
-                if (active == undefined){
-                    error("Switch():No proper format given to switch")
-                    break
-                    return
-                }
-                let active_appearance = DataPool()[6][active-1]?.appearance.name
-                active_appearance = (active_appearance == undefined)? "":active_appearance
-                Cmd("Assign appearance "+[active_appearance.slice(0,-1), "A"].join("")+" at sequence "+active)
-                list.forEach((e) => {
-                    Cmd("Assign appearance "+[DataPool()[6][e-1].appearance.name.slice(0,-1), "I"].join("")+" at sequence "+e)
-                })
+                toggle(argument)
                 break
             }
             case "dialog": {      

@@ -9,8 +9,8 @@ export class layout {
     layout_num: number; 
 
     constructor(layout_num: number) {
-        this.curr_col = 1;
-        this.curr_row = -1;
+        this.curr_col = 0;
+        this.curr_row = 0;
         this.layout_num = layout_num;
     }
 
@@ -19,11 +19,20 @@ export class layout {
     }
 
     addrow(){
-        this.curr_col = 1;
-        this.curr_row = this.curr_row - 1;
+        this.curr_col = 0;
+        this.curr_row = this.curr_row - this.items.slice(-1)[0].width;
+    }
+    addrow_align(){
+        let lowest_pos = 0
+        this.items.forEach(e => {
+            if (e.row < lowest_pos){
+                lowest_pos = e.row
+            }
+        })
+        this.curr_row = lowest_pos
     }
     addcol(){
-        this.curr_col = this.curr_col + 1;
+        this.curr_col = this.curr_col + this.items.slice(-1)[0].height;
     }
 
     /**
@@ -233,7 +242,7 @@ export class engine {
         }
         this.params.positions.forEach((pos_no, i) => {//creating toggle appearances 
             const pos_preset = static_.positions[0]+i //position beloging to sequence
-            DataPool()[6][pos_no-1][2][0]!.command = "copy preset 2."+pos_preset+ " at preset 2."+this.params.palette_pos[0] + "/nc ; " + create_toggle_command(pos_no, this.params.positions);
+            DataPool()[6][pos_no-1][2][0]!.command = "copy preset 2."+pos_preset+ " at preset 2."+this.params.palette_pos[0] + "/nc ; " + create_toggle_command(pos_no, this.params.positions, "sequence");
         })
 
         i = 0; //Increment parameter for appearances
@@ -253,7 +262,7 @@ export class engine {
         }
         this.params.positions2.forEach((pos_no, i) => {//creating toggle appearances 
             const pos_preset = static_.positions[0]+i //position beloging to sequence
-            DataPool()[6][pos_no-1][2][0]!.command = "copy preset 2."+pos_preset+ " at preset 2."+this.params.palette_pos[1] + "/nc ; " + create_toggle_command(pos_no, this.params.positions2);
+            DataPool()[6][pos_no-1][2][0]!.command = "copy preset 2."+pos_preset+ " at preset 2."+this.params.palette_pos[1] + "/nc ; " + create_toggle_command(pos_no, this.params.positions2, "sequence");
         })
 
         //TODO: start with flyout/movement mechanism (one executor/sequence for all flyouts and movements)
@@ -644,8 +653,8 @@ export function create_layout() {
     layout_.creategrid()
 }
 
-//Other functions 
-function create_toggle_command(current_no: number, input_list: number[]){//Creates command for switch plugin
+//Toggle functions
+function create_toggle_command(current_no: number, input_list: number[], type: string){//Creates command for switch plugin
     let command = []
     let pluginname = "\"" +PLUGIN_ENV.pluginName+" v"+PLUGIN_ENV.pluginVersion.replaceAll(".", "_") + "\""
     input_list.forEach((e) =>{ //Creating command where active item is on the last
@@ -654,10 +663,27 @@ function create_toggle_command(current_no: number, input_list: number[]){//Creat
         }
     })
     command.push(current_no)
-    return "call plugin "+ pluginname +" switch_" + command.join("|")
+    return "call plugin "+ pluginname +" switch_"+ type + "_" + command.join("|")
 
 }
 
+export function toggle(input_: string){
+    let input = input_.split("_")[2]
+    let list = input.split("|").map(function(e){return parseFloat(e)});
+    const active = list.pop()
+    if (active == undefined){
+        error("Switch():No proper format given to switch")
+        return
+    }
+    let active_appearance = DataPool()[6][active-1]?.appearance.name
+    active_appearance = (active_appearance == undefined)? "":active_appearance
+    Cmd("Assign appearance "+[active_appearance.slice(0,-1), "A"].join("")+" at sequence "+active)
+    list.forEach((e) => {
+        Cmd("Assign appearance "+[DataPool()[6][e-1].appearance.name.slice(0,-1), "I"].join("")+" at sequence "+e)
+    })
+}
+
+//Remove functions 
 export function remove_plugin(){
     let statics_ = new statics();
     statics_.fromstring(GetVar(UserVars(), "POS_ENGINE_STATICS"));
